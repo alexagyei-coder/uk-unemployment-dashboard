@@ -1,0 +1,1556 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UK Employment by Industry — ONS EMP13</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0f14;
+    --bg2: #13161d;
+    --bg3: #1a1e27;
+    --border: rgba(255,255,255,0.07);
+    --border2: rgba(255,255,255,0.12);
+    --text: #e8eaf0;
+    --text2: #8b90a0;
+    --text3: #565c6e;
+    --accent: #4f8ef7;
+    --accent2: #2dd4a0;
+    --accent3: #f7844f;
+    --accent4: #c084fc;
+    --red: #f76060;
+    --serif: 'DM Serif Display', Georgia, serif;
+    --sans: 'DM Sans', system-ui, sans-serif;
+    --mono: 'DM Mono', monospace;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  /* ── Header ── */
+  header {
+    padding: 28px 40px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .header-left h1 {
+    font-family: var(--serif);
+    font-size: 28px;
+    font-weight: 400;
+    letter-spacing: -0.3px;
+    color: var(--text);
+    line-height: 1.2;
+  }
+  .header-left h1 em { font-style: italic; color: var(--accent); }
+  .header-left p {
+    font-size: 12px;
+    color: var(--text3);
+    margin-top: 6px;
+    font-family: var(--mono);
+    letter-spacing: 0.02em;
+  }
+  .header-actions { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+  .source-badge {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text3);
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    padding: 4px 10px;
+    border-radius: 4px;
+    white-space: nowrap;
+  }
+  .btn-icon {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    color: var(--text2);
+    font-family: var(--mono);
+    font-size: 11px;
+    padding: 5px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .btn-icon:hover { background: var(--border2); color: var(--text); border-color: var(--border2); }
+
+  /* ── Controls ── */
+  .controls {
+    padding: 14px 40px;
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+  .ctrl-group { display: flex; align-items: center; gap: 8px; }
+  .ctrl-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text3);
+    font-family: var(--mono);
+    white-space: nowrap;
+  }
+  .btn-group {
+    display: flex;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+  }
+  .btn-group button {
+    background: none;
+    border: none;
+    color: var(--text2);
+    font-family: var(--sans);
+    font-size: 13px;
+    padding: 5px 13px;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+    white-space: nowrap;
+  }
+  .btn-group button:hover { background: rgba(255,255,255,0.05); color: var(--text); }
+  .btn-group button.active { background: var(--accent); color: #fff; }
+  select {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 12px;
+    padding: 5px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    outline: none;
+    -webkit-appearance: none;
+  }
+  select:focus { border-color: var(--accent); }
+  .range-sep { color: var(--text3); font-size: 12px; }
+
+  /* ── Search input ── */
+  .search-wrap {
+    position: relative;
+    margin-left: auto;
+  }
+  .search-wrap svg {
+    position: absolute;
+    left: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text3);
+    pointer-events: none;
+  }
+  #sectorSearch {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 12px;
+    padding: 5px 10px 5px 28px;
+    border-radius: 6px;
+    outline: none;
+    width: 180px;
+    transition: border-color 0.15s, width 0.2s;
+  }
+  #sectorSearch:focus { border-color: var(--accent); width: 220px; }
+  #sectorSearch::placeholder { color: var(--text3); }
+
+  /* ── View toggle ── */
+  .view-toggle-wrap { display:flex; align-items:center; gap:6px; }
+  .toggle-label { font-size:11px; color:var(--text3); font-family:var(--mono); }
+
+  /* ── Stat cards ── */
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1px;
+    background: var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+  .stat-card {
+    background: var(--bg2);
+    padding: 18px 24px;
+    transition: background 0.2s;
+  }
+  .stat-card:hover { background: var(--bg3); }
+  .stat-card .lbl {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text3);
+    font-family: var(--mono);
+    margin-bottom: 6px;
+  }
+  .stat-card .val {
+    font-family: var(--serif);
+    font-size: 26px;
+    color: var(--text);
+    line-height: 1;
+  }
+  .stat-card .sub {
+    font-size: 11px;
+    color: var(--text3);
+    margin-top: 5px;
+    font-family: var(--mono);
+  }
+  .stat-card .val.pos { color: var(--accent2); }
+  .stat-card .val.neg { color: var(--red); }
+  .stat-card .val.accent { color: var(--accent); }
+  .stat-card .val.small { font-size: 18px; }
+
+  /* ── Key Insights panel ── */
+  .insights-bar {
+    padding: 12px 40px;
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    overflow-x: auto;
+  }
+  .insights-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text3);
+    font-family: var(--mono);
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .insight-chip {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 4px 12px;
+    font-size: 11px;
+    color: var(--text2);
+    white-space: nowrap;
+    font-family: var(--mono);
+    transition: border-color 0.15s;
+  }
+  .insight-chip span { color: var(--accent2); font-weight: 500; }
+  .insight-chip span.neg { color: var(--red); }
+  .insight-chip span.neu { color: var(--accent); }
+
+  /* ── Main grid ── */
+  .main-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1px;
+    background: var(--border);
+    padding: 0;
+  }
+
+  /* ── Chart panels ── */
+  .panel {
+    background: var(--bg2);
+    padding: 22px 26px;
+  }
+  .panel.full-width { grid-column: 1 / -1; }
+  .panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 16px;
+  }
+  .panel-title {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text3);
+    font-family: var(--mono);
+  }
+  .panel-subtitle {
+    font-family: var(--serif);
+    font-size: 16px;
+    color: var(--text);
+    margin-top: 3px;
+    font-weight: 400;
+  }
+  .panel-badge {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text3);
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    padding: 3px 8px;
+    border-radius: 3px;
+  }
+  .panel-actions { display:flex; gap:6px; align-items:center; }
+  .chart-container { position: relative; width: 100%; }
+
+  /* ── Sector compare mode ── */
+  .compare-info {
+    display: none;
+    font-size:11px;
+    color: var(--text3);
+    font-family: var(--mono);
+    margin-bottom: 10px;
+    padding: 6px 10px;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+  }
+  .compare-info.active { display:flex; justify-content:space-between; align-items:center; }
+  .compare-info button { background:none; border:none; color:var(--accent); cursor:pointer; font-family:var(--mono); font-size:11px; }
+  .compare-info button:hover { color: var(--text); }
+
+  /* ── Legend grid ── */
+  .legend-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 5px 10px;
+    margin-top: 14px;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    color: var(--text2);
+    cursor: pointer;
+    padding: 3px 5px;
+    border-radius: 3px;
+    transition: color 0.15s, background 0.15s;
+    border: 1px solid transparent;
+  }
+  .legend-item:hover { color: var(--text); background: var(--bg3); }
+  .legend-item.selected { border-color: var(--border2); background: var(--bg3); }
+  .legend-dot { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
+
+  /* ── Gender cards ── */
+  .gender-split { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 14px; }
+  .gender-card {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 14px;
+  }
+  .gender-card .gc-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text3);
+    font-family: var(--mono);
+    margin-bottom: 6px;
+  }
+  .gender-card .gc-val { font-family: var(--serif); font-size: 22px; color: var(--text); }
+  .gender-card .gc-sub { font-size: 11px; color: var(--text3); margin-top: 4px; font-family: var(--mono); }
+
+  /* ── Pub/priv legend ── */
+  .line-legend { display:flex; gap:16px; margin-top:10px; font-size:11px; color:var(--text2); flex-wrap:wrap; }
+  .line-legend span { display:flex; align-items:center; gap:5px; }
+  .line-swatch { width:10px; height:3px; display:inline-block; border-radius:2px; }
+
+  /* ── Footer ── */
+  footer {
+    padding: 14px 40px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  footer p { font-family: var(--mono); font-size: 10px; color: var(--text3); }
+  footer a { color: var(--accent); text-decoration: none; }
+  footer a:hover { text-decoration: underline; }
+
+  /* ── Drill-down panel ── */
+  .drilldown {
+    display: none;
+    grid-column: 1 / -1;
+    background: var(--bg2);
+    padding: 22px 26px;
+    border-top: 2px solid var(--accent);
+    animation: slideDown 0.18s ease;
+  }
+  .drilldown.open { display: block; }
+  @keyframes slideDown {
+    from { opacity: 0; transform: translateY(-8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .drilldown-header { display:flex; align-items:center; gap:14px; margin-bottom:18px; flex-wrap:wrap; }
+  .drilldown-back {
+    background: var(--bg3);
+    border: 1px solid var(--border2);
+    color: var(--text2);
+    font-family: var(--mono);
+    font-size: 11px;
+    padding: 5px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+  }
+  .drilldown-back:hover { background: var(--border); color: var(--text); }
+  .drilldown-sector-dot { width:10px; height:10px; border-radius:2px; flex-shrink:0; }
+  .drilldown-title { font-family:var(--serif); font-size:20px; color:var(--text); font-weight:400; }
+  .drilldown-stats { display:flex; gap:28px; margin-bottom:18px; flex-wrap:wrap; }
+  .drilldown-stat .ds-lbl {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text3);
+    font-family: var(--mono);
+    margin-bottom: 4px;
+  }
+  .drilldown-stat .ds-val { font-family:var(--serif); font-size:22px; color:var(--text); }
+  .drilldown-stat .ds-sub { font-size:11px; color:var(--text3); font-family:var(--mono); margin-top:2px; }
+
+  /* ── Compare overlay chart ── */
+  .compare-panel {
+    display: none;
+    grid-column: 1 / -1;
+    background: var(--bg2);
+    padding: 22px 26px;
+    border-top: 2px solid var(--accent4);
+    animation: slideDown 0.18s ease;
+  }
+  .compare-panel.open { display: block; }
+  .compare-selected-chips {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-top: 10px;
+  }
+  .compare-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 8px 3px 6px;
+    border-radius: 3px;
+    font-size: 11px;
+    font-family: var(--mono);
+    color: var(--text);
+    background: var(--bg3);
+    border: 1px solid var(--border2);
+  }
+  .compare-chip .dot { width:6px; height:6px; border-radius:2px; flex-shrink:0; }
+  .compare-chip .x { cursor:pointer; color:var(--text3); margin-left:2px; }
+  .compare-chip .x:hover { color:var(--red); }
+
+  /* ── Scrollbar ── */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+
+  /* ── Responsive ── */
+  @media (max-width: 900px) {
+    header { padding: 18px 20px; }
+    .controls { padding: 10px 16px; }
+    .insights-bar { padding: 10px 16px; }
+    .stats-row { grid-template-columns: repeat(2, 1fr); }
+    .main-grid { grid-template-columns: 1fr; }
+    .panel.full-width { grid-column: 1; }
+    .legend-grid { grid-template-columns: repeat(2, 1fr); }
+    .gender-split { grid-template-columns: 1fr 1fr; }
+    footer { padding: 12px 20px; }
+    .search-wrap { display:none; }
+    #sectorSearch { width:140px; }
+  }
+  @media (max-width: 580px) {
+    .stats-row { grid-template-columns: 1fr 1fr; }
+    .header-left h1 { font-size: 22px; }
+    .legend-grid { grid-template-columns: repeat(2, 1fr); }
+    .drilldown-stats { gap:16px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <h1>UK Employment <em>by Industry</em></h1>
+    <p>ONS EMP13 · Labour Force Survey · Not seasonally adjusted · Jan 1997 – Dec 2025</p>
+  </div>
+  <div class="header-actions">
+    <button class="btn-icon" onclick="shareUrl()" title="Copy shareable link">
+      <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="13" cy="2.5" r="1.5"/><circle cx="13" cy="13.5" r="1.5"/><circle cx="3" cy="8" r="1.5"/><line x1="4.5" y1="7.2" x2="11.5" y2="3.3"/><line x1="4.5" y1="8.8" x2="11.5" y2="12.7"/></svg>
+      Share
+    </button>
+    <button class="btn-icon" onclick="downloadCSV()" title="Download filtered data as CSV">
+      <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 14h10M8 2v9M5 8l3 3 3-3"/></svg>
+      Export CSV
+    </button>
+    <span class="source-badge">Published 17 Feb 2026</span>
+  </div>
+</header>
+
+<div class="controls">
+  <div class="ctrl-group">
+    <span class="ctrl-label">View</span>
+    <div class="btn-group">
+      <button id="btnPeople" class="active" onclick="setGender('People')">All people</button>
+      <button id="btnMen" onclick="setGender('Men')">Men</button>
+      <button id="btnWomen" onclick="setGender('Women')">Women</button>
+    </div>
+  </div>
+  <div class="ctrl-group">
+    <span class="ctrl-label">Mode</span>
+    <div class="btn-group">
+      <button id="btnAbs" class="active" onclick="setMode('abs')">Thousands</button>
+      <button id="btnPct" onclick="setMode('pct')">YoY %</button>
+    </div>
+  </div>
+  <div class="ctrl-group">
+    <span class="ctrl-label">From</span>
+    <select id="fromYear" onchange="render()"></select>
+    <span class="range-sep">—</span>
+    <select id="toYear" onchange="render()"></select>
+  </div>
+  <div class="ctrl-group" style="gap:5px">
+    <button class="btn-icon" onclick="setRange(5)" style="padding:4px 10px;font-size:11px">5Y</button>
+    <button class="btn-icon" onclick="setRange(10)" style="padding:4px 10px;font-size:11px">10Y</button>
+    <button class="btn-icon" onclick="setRange(20)" style="padding:4px 10px;font-size:11px">20Y</button>
+    <button class="btn-icon" onclick="setRange(99)" style="padding:4px 10px;font-size:11px">All</button>
+  </div>
+  <div class="search-wrap">
+    <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="7" cy="7" r="4.5"/><line x1="10.5" y1="10.5" x2="14" y2="14"/></svg>
+    <input id="sectorSearch" type="text" placeholder="Filter sectors…" oninput="filterSectors()" />
+  </div>
+</div>
+
+<!-- Key Insights bar -->
+<div class="insights-bar" id="insightsBar">
+  <span class="insights-label">Key insights</span>
+  <span class="insight-chip" id="ins1">Loading…</span>
+  <span class="insight-chip" id="ins2"></span>
+  <span class="insight-chip" id="ins3"></span>
+  <span class="insight-chip" id="ins4"></span>
+</div>
+
+<div class="stats-row">
+  <div class="stat-card">
+    <div class="lbl">Total employed (latest)</div>
+    <div class="val accent" id="sTotal">—</div>
+    <div class="sub" id="sPeriod">—</div>
+  </div>
+  <div class="stat-card">
+    <div class="lbl">Change over period</div>
+    <div class="val pos" id="sChange">—</div>
+    <div class="sub" id="sChangePct">—</div>
+  </div>
+  <div class="stat-card">
+    <div class="lbl">Largest sector (latest)</div>
+    <div class="val small" id="sTop">—</div>
+    <div class="sub" id="sTopVal">—</div>
+  </div>
+  <div class="stat-card">
+    <div class="lbl">Fastest growing (since 2019)</div>
+    <div class="val small" id="sFast">—</div>
+    <div class="sub" id="sFastVal">—</div>
+  </div>
+</div>
+
+<div class="main-grid">
+
+  <!-- Trend chart -->
+  <div class="panel full-width">
+    <div class="panel-header">
+      <div>
+        <div class="panel-title">Employment trend</div>
+        <div class="panel-subtitle">Total in employment over time</div>
+      </div>
+      <span class="panel-badge" id="trendBadge">thousands</span>
+    </div>
+    <div class="chart-container" style="height:220px">
+      <canvas id="trendChart"></canvas>
+    </div>
+  </div>
+
+  <!-- Sector bar chart -->
+  <div class="panel" style="grid-column: 1 / -1">
+    <div class="panel-header">
+      <div>
+        <div class="panel-title">By sector</div>
+        <div class="panel-subtitle">Employment breakdown — latest quarter</div>
+      </div>
+      <div class="panel-actions">
+        <span class="panel-badge" id="sectorPeriodBadge">—</span>
+        <button class="btn-icon" id="compareModeBtn" onclick="toggleCompareMode()" style="font-size:10px;padding:3px 9px">
+          <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="6" height="10" rx="1"/><rect x="9" y="1" width="6" height="13" rx="1"/></svg>
+          Compare
+        </button>
+      </div>
+    </div>
+    <div class="compare-info" id="compareInfo">
+      <span id="compareInfoText">Click sectors in the legend to add to comparison (max 5)</span>
+      <button onclick="clearCompare()">Clear all</button>
+    </div>
+    <div id="noSectorMsg" style="display:none;color:var(--text3);font-size:13px;padding:20px 0">
+      Sector breakdown available from 2019 onwards. Extend the date range to include post-2019 data.
+    </div>
+    <div class="chart-container" style="height:460px">
+      <canvas id="sectorChart"></canvas>
+    </div>
+    <div class="legend-grid" id="sectorLegend"></div>
+  </div>
+
+  <!-- Compare overlay panel -->
+  <div class="compare-panel" id="comparePanel">
+    <div class="panel-header">
+      <div>
+        <div class="panel-title">Sector comparison</div>
+        <div class="panel-subtitle">Selected sectors over time</div>
+      </div>
+      <div class="panel-actions">
+        <span class="panel-badge" id="comparePanelBadge">thousands</span>
+        <button class="drilldown-back" onclick="clearCompare()">✕ Close</button>
+      </div>
+    </div>
+    <div class="compare-selected-chips" id="compareChips"></div>
+    <div class="chart-container" style="height:280px;margin-top:14px">
+      <canvas id="compareChart"></canvas>
+    </div>
+  </div>
+
+  <!-- Sector drill-down -->
+  <div class="drilldown" id="drilldown">
+    <div class="drilldown-header">
+      <button class="drilldown-back" onclick="closeDrilldown()">← Back</button>
+      <span class="drilldown-sector-dot" id="ddDot"></span>
+      <span class="drilldown-title" id="ddTitle">—</span>
+      <span class="panel-badge" style="margin-left:auto">thousands · all available data</span>
+    </div>
+    <div class="drilldown-stats" id="ddStats"></div>
+    <div class="chart-container" style="height:260px">
+      <canvas id="drillChart"></canvas>
+    </div>
+  </div>
+
+  <!-- Public/Private split -->
+  <div class="panel">
+    <div class="panel-header">
+      <div>
+        <div class="panel-title">Public vs private</div>
+        <div class="panel-subtitle">Sector split over time</div>
+      </div>
+      <span class="panel-badge">thousands</span>
+    </div>
+    <div class="chart-container" style="height:200px">
+      <canvas id="pubprivChart"></canvas>
+    </div>
+    <div class="line-legend">
+      <span><span class="line-swatch" style="background:#4f8ef7"></span>Private</span>
+      <span><span class="line-swatch" style="background:#2dd4a0"></span>Public</span>
+    </div>
+  </div>
+
+  <!-- Men vs Women -->
+  <div class="panel">
+    <div class="panel-header">
+      <div>
+        <div class="panel-title">Gender split</div>
+        <div class="panel-subtitle">Men vs women over time</div>
+      </div>
+      <span class="panel-badge">thousands</span>
+    </div>
+    <div class="chart-container" style="height:200px">
+      <canvas id="genderChart"></canvas>
+    </div>
+    <div class="gender-split" id="genderCards"></div>
+  </div>
+
+</div>
+
+<footer>
+  <p>Source: Office for National Statistics · <a href="https://www.ons.gov.uk/employmentandlabourmarket/peopleinwork/employmentandemployeetypes/datasets/employmentbyindustryemp13" target="_blank">EMP13 dataset</a> · Labour Force Survey · United Kingdom · Thousands, not seasonally adjusted</p>
+  <p>Note: Reweighted from Jan–Mar 2019; sector breakdown available from that date. Step change at Jan–Mar 2019.</p>
+</footer>
+
+<div id="toast" style="position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--bg3);border:1px solid var(--border2);color:var(--text);font-family:var(--mono);font-size:12px;padding:8px 18px;border-radius:20px;opacity:0;pointer-events:none;transition:opacity 0.2s;z-index:999"></div>
+
+<script>
+/* ═══════════════════════════════════════════════════
+   DATA
+═══════════════════════════════════════════════════ */
+const RAW = {
+People: [
+{period:"Jan-Mar 1997",all:26423726,pub:5752085,priv:20634584,agr:null,min:null,mfg:null,con:null,ret:null,trn:null,acc:null,ict:null,fin:null,est:null,pro:null,adm:null,pad:null,edu:null,hea:null,oth:null},
+{period:"Apr-Jun 1997",all:26599918,pub:5811403,priv:20741826,agr:null,min:null,mfg:null,con:null,ret:null,trn:null,acc:null,ict:null,fin:null,est:null,pro:null,adm:null,pad:null,edu:null,hea:null,oth:null},
+{period:"Jul-Sep 1997",all:26849533,pub:5859742,priv:20933490,agr:null,min:null,mfg:null,con:null,ret:null,trn:null,acc:null,ict:null,fin:null,est:null,pro:null,adm:null,pad:null,edu:null,hea:null,oth:null},
+{period:"Oct-Dec 1997",all:26880729,pub:5843344,priv:20997148,agr:null,min:null,mfg:null,con:null,ret:null,trn:null,acc:null,ict:null,fin:null,est:null,pro:null,adm:null,pad:null,edu:null,hea:null,oth:null},
+{period:"Jan-Mar 1998",all:26887065,pub:5837007,priv:20998437,agr:null,min:null,mfg:null,con:null,ret:null,trn:null,acc:null,ict:null,fin:null,est:null,pro:null,adm:null,pad:null,edu:null,hea:null,oth:null},
+{period:"Apr-Jun 1998",all:27089023,pub:5894497,priv:21139900,agr:null,min:null,mfg:null,con:null,ret:null,trn:null,acc:null,ict:null,fin:null,est:null,pro:null,adm:null,pad:null,edu:null,hea:null,oth:null},
+{period:"Jul-Sep 1998",all:27307218,pub:5925534,priv:21324481,agr:null,min:null,mfg:null,con:null,ret:null,trn:null,acc:null,ict:null,fin:null,est:null,pro:null,adm:null,pad:null,edu:null,hea:null,oth:null},
+{period:"Oct-Dec 1998",all:27219313,pub:5924440,priv:21233527,agr:null,min:null,mfg:null,con:null,ret:null,trn:null,acc:null,ict:null,fin:null,est:null,pro:null,adm:null,pad:null,edu:null,hea:null,oth:null},
+{period:"Jan-Mar 1999",all:27124826,pub:5931898,priv:21141303,agr:null,min:null,mfg:null,con:null,ret:null,trn:null,acc:null,ict:null,fin:null,est:null,pro:null,adm:null,pad:null,edu:null,hea:null,oth:null},
+{period:"Apr-Jun 1999",all:27384183,pub:5989706,priv:21346694,agr:null,min:null,mfg:null,con:null,ret:null,trn:null,acc:null,ict:null,fin:null,est:null,pro:null,adm:null,pad:null,edu:null,hea:null,oth:null},
+{period:"Jul-Sep 1999",all:27536773,pub:6007578,priv:21475082,agr:null,min:null,mfg:null,con:null,ret:null,trn:null,acc:null,ict:null,fin:null,est:null,pro:null,adm:null,pad:null,edu:null,hea:null,oth:null},
+{period:"Oct-Dec 1999",all:27600614,pub:6001116,priv:21547117,agr:null,min:null,mfg:null,con:null,ret:null,trn:null,acc:null,ict:null,fin:null,est:null,pro:null,adm:null,pad:null,edu:null,hea:null,oth:null},
+{period:"Jan-Mar 2000",all:27618025,pub:5984049,priv:21584600,agr:null,min:null,mfg:null,con:null,ret:null,trn:null,acc:null,ict:null,fin:null,est:null,pro:null,adm:null,pad:null,edu:null,hea:null,oth:null},
+{period:"Apr-Jun 2000",all:27871285,pub:6028867,priv:21790989,agr:null,min:null,mfg:null,con:null,ret:null,trn:null,acc:null,ict:null,fin:null,est:null,pro:null,adm:null,pad:null,edu:null,hea:null,oth:null},
+{period:"Jul-Sep 2000",all:27981539,pub:6065684,priv:21859437,agr:null,min:null,mfg:null,con:null,ret:null,trn:null,acc:null,ict:null,fin:null,est:null,pro:null,adm:null,pad:null,edu:null,hea:null,oth:null},
+{period:"Oct-Dec 2000",all:27920960,pub:6019832,priv:21854547,agr:null,min:null,mfg:null,con:null,ret:null,trn:null,acc:null,ict:null,fin:null,est:null,pro:null,adm:null,pad:null,edu:null,hea:null,oth:null},
+{period:"Jan-Mar 2001",all:27858891,pub:5999025,priv:21814099,agr:null,min:null,mfg:null,con:null,ret:null,trn:null,acc:null,ict:null,fin:null,est:null,pro:null,adm:null,pad:null,edu:null,hea:null,oth:null},
+{period:"Apr-Jun 2001",all:28006065,pub:6041399,priv:21916093,agr:null,min:null,mfg:null,con:null,ret:null,trn:null,acc:null,ict:null,fin:null,est:null,pro:null,adm:null,pad:null,edu:null,hea:null,oth:null},
+{period:"Jul-Sep 2001",all:28027584,pub:6086685,priv:21888700,agr:null,min:null,mfg:null,con:null,ret:null,trn:null,acc:null,ict:null,fin:null,est:null,pro:null,adm:null,pad:null,edu:null,hea:null,oth:null},
+{period:"Oct-Dec 2001",all:27877897,pub:6075875,priv:21754498,agr:null,min:null,mfg:null,con:null,ret:null,trn:null,acc:null,ict:null,fin:null,est:null,pro:null,adm:null,pad:null,edu:null,hea:null,oth:null},
+{period:"Jan-Mar 2002",all:27880568,pub:6113455,priv:21719977,agr:null,min:null,mfg:null,con:null,ret:null,trn:null,acc:null,ict:null,fin:null,est:null,pro:null,adm:null,pad:null,edu:null,hea:null,oth:null},
+{period:"Apr-Jun 2002",all:28022289,pub:6208543,priv:21758396,agr:null,min:null,mfg:null,con:null,ret:null,trn:null,acc:null,ict:null,fin:null,est:null,pro:null,adm:null,pad:null,edu:null,hea:null,oth:null},
+{period:"Jul-Sep 2002",all:28129264,pub:6296888,priv:21790820,agr:null,min:null,mfg:null,con:null,ret:null,trn:null,acc:null,ict:null,fin:null,est:null,pro:null,adm:null,pad:null,edu:null,hea:null,oth:null},
+{period:"Oct-Dec 2002",all:28051268,pub:6299701,priv:21705024,agr:null,min:null,mfg:null,con:null,ret:null,trn:null,acc:null,ict:null,fin:null,est:null,pro:null,adm:null,pad:null,edu:null,hea:null,oth:null},
+{period:"Jan-Mar 2003",all:28108408,pub:6371497,priv:21695893,agr:null,min:null,mfg:null,con:null,ret:null,trn:null,acc:null,ict:null,fin:null,est:null,pro:null,adm:null,pad:null,edu:null,hea:null,oth:null},
+{period:"Apr-Jun 2003",all:28403419,pub:6509020,priv:21850862,agr:null,min:null,mfg:null,con:null,ret:null,trn:null,acc:null,ict:null,fin:null,est:null,pro:null,adm:null,pad:null,edu:null,hea:null,oth:null},
+{period:"Jul-Sep 2003",all:28523700,pub:6596779,priv:21886261,agr:null,min:null,mfg:null,con:null,ret:null,trn:null,acc:null,ict:null,fin:null,est:null,pro:null,adm:null,pad:null,edu:null,hea:null,oth:null},
+{period:"Oct-Dec 2003",all:28516026,pub:6619393,priv:21855396,agr:null,min:null,mfg:null,con:null,ret:null,trn:null,acc:null,ict:null,fin:null,est:null,pro:null,adm:null,pad:null,edu:null,hea:null,oth:null},
+{period:"Jan-Mar 2004",all:28479820,pub:6608248,priv:21831093,agr:null,min:null,mfg:null,con:null,ret:null,trn:null,acc:null,ict:null,fin:null,est:null,pro:null,adm:null,pad:null,edu:null,hea:null,oth:null},
+{period:"Apr-Jun 2004",all:28756978,pub:6617226,priv:22093267,agr:null,min:null,mfg:null,con:null,ret:null,trn:null,acc:null,ict:null,fin:null,est:null,pro:null,adm:null,pad:null,edu:null,hea:null,oth:null},
+{period:"Jul-Sep 2004",all:28974716,pub:6614148,priv:22304009,agr:null,min:null,mfg:null,con:null,ret:null,trn:null,acc:null,ict:null,fin:null,est:null,pro:null,adm:null,pad:null,edu:null,hea:null,oth:null},
+{period:"Oct-Dec 2004",all:28901498,pub:6570697,priv:22278745,agr:null,min:null,mfg:null,con:null,ret:null,trn:null,acc:null,ict:null,fin:null,est:null,pro:null,adm:null,pad:null,edu:null,hea:null,oth:null},
+{period:"Jan-Mar 2005",all:28843162,pub:6627753,priv:22167497,agr:null,min:null,mfg:null,con:null,ret:null,trn:null,acc:null,ict:null,fin:null,est:null,pro:null,adm:null,pad:null,edu:null,hea:null,oth:null},
+{period:"Apr-Jun 2005",all:29027897,pub:6620978,priv:22361736,agr:null,min:null,mfg:null,con:null,ret:null,trn:null,acc:null,ict:null,fin:null,est:null,pro:null,adm:null,pad:null,edu:null,hea:null,oth:null},
+{period:"Jul-Sep 2005",all:29113862,pub:6585803,priv:22479483,agr:null,min:null,mfg:null,con:null,ret:null,trn:null,acc:null,ict:null,fin:null,est:null,pro:null,adm:null,pad:null,edu:null,hea:null,oth:null},
+{period:"Oct-Dec 2005",all:29007584,pub:6540499,priv:22422694,agr:null,min:null,mfg:null,con:null,ret:null,trn:null,acc:null,ict:null,fin:null,est:null,pro:null,adm:null,pad:null,edu:null,hea:null,oth:null},
+{period:"Jan-Mar 2006",all:29000050,pub:6553490,priv:22396261,agr:null,min:null,mfg:null,con:null,ret:null,trn:null,acc:null,ict:null,fin:null,est:null,pro:null,adm:null,pad:null,edu:null,hea:null,oth:null},
+{period:"Apr-Jun 2006",all:29267847,pub:6573888,priv:22646534,agr:null,min:null,mfg:null,con:null,ret:null,trn:null,acc:null,ict:null,fin:null,est:null,pro:null,adm:null,pad:null,edu:null,hea:null,oth:null},
+{period:"Jul-Sep 2006",all:29450099,pub:6570497,priv:22831249,agr:null,min:null,mfg:null,con:null,ret:null,trn:null,acc:null,ict:null,fin:null,est:null,pro:null,adm:null,pad:null,edu:null,hea:null,oth:null},
+{period:"Oct-Dec 2006",all:29424773,pub:6549741,priv:22830127,agr:null,min:null,mfg:null,con:null,ret:null,trn:null,acc:null,ict:null,fin:null,est:null,pro:null,adm:null,pad:null,edu:null,hea:null,oth:null},
+{period:"Jan-Mar 2007",all:29446779,pub:6538100,priv:22860773,agr:null,min:null,mfg:null,con:null,ret:null,trn:null,acc:null,ict:null,fin:null,est:null,pro:null,adm:null,pad:null,edu:null,hea:null,oth:null},
+{period:"Apr-Jun 2007",all:29712832,pub:6548660,priv:23112041,agr:null,min:null,mfg:null,con:null,ret:null,trn:null,acc:null,ict:null,fin:null,est:null,pro:null,adm:null,pad:null,edu:null,hea:null,oth:null},
+{period:"Jul-Sep 2007",all:29895285,pub:6537791,priv:23299267,agr:null,min:null,mfg:null,con:null,ret:null,trn:null,acc:null,ict:null,fin:null,est:null,pro:null,adm:null,pad:null,edu:null,hea:null,oth:null},
+{period:"Oct-Dec 2007",all:29987175,pub:6510601,priv:23418827,agr:null,min:null,mfg:null,con:null,ret:null,trn:null,acc:null,ict:null,fin:null,est:null,pro:null,adm:null,pad:null,edu:null,hea:null,oth:null},
+{period:"Jan-Mar 2008",all:29925226,pub:6492316,priv:23370741,agr:null,min:null,mfg:null,con:null,ret:null,trn:null,acc:null,ict:null,fin:null,est:null,pro:null,adm:null,pad:null,edu:null,hea:null,oth:null},
+{period:"Apr-Jun 2008",all:30135316,pub:6506012,priv:23569524,agr:null,min:null,mfg:null,con:null,ret:null,trn:null,acc:null,ict:null,fin:null,est:null,pro:null,adm:null,pad:null,edu:null,hea:null,oth:null},
+{period:"Jul-Sep 2008",all:30098839,pub:6524753,priv:23520337,agr:null,min:null,mfg:null,con:null,ret:null,trn:null,acc:null,ict:null,fin:null,est:null,pro:null,adm:null,pad:null,edu:null,hea:null,oth:null},
+{period:"Oct-Dec 2008",all:29712893,pub:6484249,priv:23165547,agr:null,min:null,mfg:null,con:null,ret:null,trn:null,acc:null,ict:null,fin:null,est:null,pro:null,adm:null,pad:null,edu:null,hea:null,oth:null},
+{period:"Jan-Mar 2009",all:29327296,pub:6465219,priv:22803090,agr:null,min:null,mfg:null,con:null,ret:null,trn:null,acc:null,ict:null,fin:null,est:null,pro:null,adm:null,pad:null,edu:null,hea:null,oth:null},
+{period:"Apr-Jun 2009",all:29152558,pub:6504060,priv:22597215,agr:null,min:null,mfg:null,con:null,ret:null,trn:null,acc:null,ict:null,fin:null,est:null,pro:null,adm:null,pad:null,edu:null,hea:null,oth:null},
+{period:"Jul-Sep 2009",all:29086613,pub:6519095,priv:22516462,agr:null,min:null,mfg:null,con:null,ret:null,trn:null,acc:null,ict:null,fin:null,est:null,pro:null,adm:null,pad:null,edu:null,hea:null,oth:null},
+{period:"Oct-Dec 2009",all:28979534,pub:6550699,priv:22373685,agr:null,min:null,mfg:null,con:null,ret:null,trn:null,acc:null,ict:null,fin:null,est:null,pro:null,adm:null,pad:null,edu:null,hea:null,oth:null},
+{period:"Jan-Mar 2010",all:29064406,pub:6533478,priv:22469148,agr:null,min:null,mfg:null,con:null,ret:null,trn:null,acc:null,ict:null,fin:null,est:null,pro:null,adm:null,pad:null,edu:null,hea:null,oth:null},
+{period:"Apr-Jun 2010",all:29249530,pub:6559007,priv:22626063,agr:null,min:null,mfg:null,con:null,ret:null,trn:null,acc:null,ict:null,fin:null,est:null,pro:null,adm:null,pad:null,edu:null,hea:null,oth:null},
+{period:"Jul-Sep 2010",all:29438009,pub:6418791,priv:22962003,agr:null,min:null,mfg:null,con:null,ret:null,trn:null,acc:null,ict:null,fin:null,est:null,pro:null,adm:null,pad:null,edu:null,hea:null,oth:null},
+{period:"Oct-Dec 2010",all:29414568,pub:6340800,priv:23018461,agr:null,min:null,mfg:null,con:null,ret:null,trn:null,acc:null,ict:null,fin:null,est:null,pro:null,adm:null,pad:null,edu:null,hea:null,oth:null},
+{period:"Jan-Mar 2011",all:29278726,pub:6183867,priv:23048049,agr:null,min:null,mfg:null,con:null,ret:null,trn:null,acc:null,ict:null,fin:null,est:null,pro:null,adm:null,pad:null,edu:null,hea:null,oth:null},
+{period:"Apr-Jun 2011",all:29385028,pub:6082697,priv:23254127,agr:null,min:null,mfg:null,con:null,ret:null,trn:null,acc:null,ict:null,fin:null,est:null,pro:null,adm:null,pad:null,edu:null,hea:null,oth:null},
+{period:"Jul-Sep 2011",all:29592785,pub:5998432,priv:23544985,agr:null,min:null,mfg:null,con:null,ret:null,trn:null,acc:null,ict:null,fin:null,est:null,pro:null,adm:null,pad:null,edu:null,hea:null,oth:null},
+{period:"Oct-Dec 2011",all:29439703,pub:5935424,priv:23462012,agr:null,min:null,mfg:null,con:null,ret:null,trn:null,acc:null,ict:null,fin:null,est:null,pro:null,adm:null,pad:null,edu:null,hea:null,oth:null},
+{period:"Jan-Mar 2012",all:29346093,pub:5899965,priv:23399059,agr:null,min:null,mfg:null,con:null,ret:null,trn:null,acc:null,ict:null,fin:null,est:null,pro:null,adm:null,pad:null,edu:null,hea:null,oth:null},
+{period:"Apr-Jun 2012",all:29670696,pub:5854855,priv:23769350,agr:null,min:null,mfg:null,con:null,ret:null,trn:null,acc:null,ict:null,fin:null,est:null,pro:null,adm:null,pad:null,edu:null,hea:null,oth:null},
+{period:"Jul-Sep 2012",all:29897782,pub:5822126,priv:24016393,agr:null,min:null,mfg:null,con:null,ret:null,trn:null,acc:null,ict:null,fin:null,est:null,pro:null,adm:null,pad:null,edu:null,hea:null,oth:null},
+{period:"Oct-Dec 2012",all:29796703,pub:5774621,priv:23977022,agr:null,min:null,mfg:null,con:null,ret:null,trn:null,acc:null,ict:null,fin:null,est:null,pro:null,adm:null,pad:null,edu:null,hea:null,oth:null},
+{period:"Jan-Mar 2013",all:29805186,pub:5720975,priv:24040609,agr:null,min:null,mfg:null,con:null,ret:null,trn:null,acc:null,ict:null,fin:null,est:null,pro:null,adm:null,pad:null,edu:null,hea:null,oth:null},
+{period:"Apr-Jun 2013",all:30092543,pub:5711975,priv:24336977,agr:null,min:null,mfg:null,con:null,ret:null,trn:null,acc:null,ict:null,fin:null,est:null,pro:null,adm:null,pad:null,edu:null,hea:null,oth:null},
+{period:"Jul-Sep 2013",all:30387019,pub:5665782,priv:24674424,agr:null,min:null,mfg:null,con:null,ret:null,trn:null,acc:null,ict:null,fin:null,est:null,pro:null,adm:null,pad:null,edu:null,hea:null,oth:null},
+{period:"Oct-Dec 2013",all:30387437,pub:5614671,priv:24726432,agr:null,min:null,mfg:null,con:null,ret:null,trn:null,acc:null,ict:null,fin:null,est:null,pro:null,adm:null,pad:null,edu:null,hea:null,oth:null},
+{period:"Jan-Mar 2014",all:30399208,pub:5604399,priv:24751248,agr:null,min:null,mfg:null,con:null,ret:null,trn:null,acc:null,ict:null,fin:null,est:null,pro:null,adm:null,pad:null,edu:null,hea:null,oth:null},
+{period:"Apr-Jun 2014",all:30799530,pub:5611017,priv:25138949,agr:null,min:null,mfg:null,con:null,ret:null,trn:null,acc:null,ict:null,fin:null,est:null,pro:null,adm:null,pad:null,edu:null,hea:null,oth:null},
+{period:"Jul-Sep 2014",all:31009044,pub:5587068,priv:25375680,agr:null,min:null,mfg:null,con:null,ret:null,trn:null,acc:null,ict:null,fin:null,est:null,pro:null,adm:null,pad:null,edu:null,hea:null,oth:null},
+{period:"Oct-Dec 2014",all:30998003,pub:5567977,priv:25386474,agr:null,min:null,mfg:null,con:null,ret:null,trn:null,acc:null,ict:null,fin:null,est:null,pro:null,adm:null,pad:null,edu:null,hea:null,oth:null},
+{period:"Jan-Mar 2015",all:30938780,pub:5551042,priv:25346124,agr:null,min:null,mfg:null,con:null,ret:null,trn:null,acc:null,ict:null,fin:null,est:null,pro:null,adm:null,pad:null,edu:null,hea:null,oth:null},
+{period:"Apr-Jun 2015",all:31263454,pub:5567773,priv:25650668,agr:null,min:null,mfg:null,con:null,ret:null,trn:null,acc:null,ict:null,fin:null,est:null,pro:null,adm:null,pad:null,edu:null,hea:null,oth:null},
+{period:"Jul-Sep 2015",all:31481289,pub:5577413,priv:25862706,agr:null,min:null,mfg:null,con:null,ret:null,trn:null,acc:null,ict:null,fin:null,est:null,pro:null,adm:null,pad:null,edu:null,hea:null,oth:null},
+{period:"Oct-Dec 2015",all:31365831,pub:5532985,priv:25793127,agr:null,min:null,mfg:null,con:null,ret:null,trn:null,acc:null,ict:null,fin:null,est:null,pro:null,adm:null,pad:null,edu:null,hea:null,oth:null},
+{period:"Jan-Mar 2016",all:31428699,pub:5539011,priv:25849600,agr:null,min:null,mfg:null,con:null,ret:null,trn:null,acc:null,ict:null,fin:null,est:null,pro:null,adm:null,pad:null,edu:null,hea:null,oth:null},
+{period:"Apr-Jun 2016",all:31618427,pub:5562613,priv:26013826,agr:null,min:null,mfg:null,con:null,ret:null,trn:null,acc:null,ict:null,fin:null,est:null,pro:null,adm:null,pad:null,edu:null,hea:null,oth:null},
+{period:"Jul-Sep 2016",all:31817695,pub:5572553,priv:26198453,agr:null,min:null,mfg:null,con:null,ret:null,trn:null,acc:null,ict:null,fin:null,est:null,pro:null,adm:null,pad:null,edu:null,hea:null,oth:null},
+{period:"Oct-Dec 2016",all:31838847,pub:5571895,priv:26222561,agr:null,min:null,mfg:null,con:null,ret:null,trn:null,acc:null,ict:null,fin:null,est:null,pro:null,adm:null,pad:null,edu:null,hea:null,oth:null},
+{period:"Jan-Mar 2017",all:31882543,pub:5579754,priv:26259640,agr:null,min:null,mfg:null,con:null,ret:null,trn:null,acc:null,ict:null,fin:null,est:null,pro:null,adm:null,pad:null,edu:null,hea:null,oth:null},
+{period:"Apr-Jun 2017",all:32104505,pub:5581866,priv:26479524,agr:null,min:null,mfg:null,con:null,ret:null,trn:null,acc:null,ict:null,fin:null,est:null,pro:null,adm:null,pad:null,edu:null,hea:null,oth:null},
+{period:"Jul-Sep 2017",all:32317779,pub:5622948,priv:26647380,agr:null,min:null,mfg:null,con:null,ret:null,trn:null,acc:null,ict:null,fin:null,est:null,pro:null,adm:null,pad:null,edu:null,hea:null,oth:null},
+{period:"Oct-Dec 2017",all:32192785,pub:5593064,priv:26552046,agr:null,min:null,mfg:null,con:null,ret:null,trn:null,acc:null,ict:null,fin:null,est:null,pro:null,adm:null,pad:null,edu:null,hea:null,oth:null},
+{period:"Jan-Mar 2018",all:32183785,pub:5630428,priv:26511476,agr:null,min:null,mfg:null,con:null,ret:null,trn:null,acc:null,ict:null,fin:null,est:null,pro:null,adm:null,pad:null,edu:null,hea:null,oth:null},
+{period:"Apr-Jun 2018",all:32496748,pub:5649026,priv:26797900,agr:null,min:null,mfg:null,con:null,ret:null,trn:null,acc:null,ict:null,fin:null,est:null,pro:null,adm:null,pad:null,edu:null,hea:null,oth:null},
+{period:"Jul-Sep 2018",all:32733888,pub:5696011,priv:26984997,agr:null,min:null,mfg:null,con:null,ret:null,trn:null,acc:null,ict:null,fin:null,est:null,pro:null,adm:null,pad:null,edu:null,hea:null,oth:null},
+{period:"Oct-Dec 2018",all:32627782,pub:5665462,priv:26912434,agr:null,min:null,mfg:null,con:null,ret:null,trn:null,acc:null,ict:null,fin:null,est:null,pro:null,adm:null,pad:null,edu:null,hea:null,oth:null},
+{period:"Jan-Mar 2019",all:32768219,pub:5756048,priv:26968534,agr:316882,min:600023,mfg:2914540,con:2219753,ret:3882083,trn:1633867,acc:1894895,ict:1570614,fin:1308714,est:387283,pro:2766040,adm:1516038,pad:1868289,edu:3251023,hea:4415706,oth:1798556},
+{period:"Apr-Jun 2019",all:32956940,pub:5755394,priv:27155699,agr:299534,min:534540,mfg:2941413,con:2285765,ret:3904978,trn:1606218,acc:1946494,ict:1600617,fin:1363419,est:399618,pro:2723244,adm:1530785,pad:1905044,edu:3406038,hea:4477867,oth:1845573},
+{period:"Jul-Sep 2019",all:33095793,pub:5754513,priv:27293576,agr:308126,min:548640,mfg:2936804,con:2238481,ret:3949533,trn:1583867,acc:2016099,ict:1631533,fin:1369266,est:440020,pro:2834327,adm:1573553,pad:1951249,edu:3366116,hea:4441162,oth:1878344},
+{period:"Oct-Dec 2019",all:32992127,pub:5726267,priv:27218416,agr:302773,min:541085,mfg:2893929,con:2175124,ret:3972501,trn:1619748,acc:1929684,ict:1612416,fin:1369278,est:414839,pro:2760462,adm:1540028,pad:1975700,edu:3235268,hea:4382750,oth:1870541},
+{period:"Jan-Mar 2020",all:32993523,pub:5826234,priv:27117988,agr:285781,min:568456,mfg:2887699,con:2207895,ret:3934777,trn:1592483,acc:1927979,ict:1595501,fin:1315994,est:419419,pro:2741773,adm:1479018,pad:1974249,edu:3349041,hea:4377285,oth:1844217},
+{period:"Apr-Jun 2020",all:32459706,pub:5853296,priv:26560015,agr:299440,min:437395,mfg:2677175,con:1874547,ret:3720847,trn:1446617,acc:1411063,ict:1596451,fin:1231069,est:327162,pro:2503668,adm:1265048,pad:2108244,edu:3295100,hea:4359558,oth:1669718},
+{period:"Jul-Sep 2020",all:32309397,pub:5863513,priv:26399183,agr:313621,min:456620,mfg:2698700,con:2039017,ret:3744918,trn:1498393,acc:1531779,ict:1541580,fin:1222038,est:363521,pro:2462543,adm:1226553,pad:2178226,edu:3143218,hea:4351069,oth:1708882},
+{period:"Oct-Dec 2020",all:32102025,pub:5897022,priv:26161183,agr:298993,min:481882,mfg:2617165,con:2000162,ret:3736561,trn:1444609,acc:1319126,ict:1574800,fin:1270843,est:353697,pro:2540649,adm:1230278,pad:2270060,edu:3260698,hea:4346741,oth:1671371},
+{period:"Jan-Mar 2021",all:31920023,pub:5958434,priv:25918017,agr:281817,min:476869,mfg:2621316,con:2016124,ret:3682600,trn:1434716,acc:1143855,ict:1573424,fin:1221234,est:350895,pro:2416386,adm:1158403,pad:2352571,edu:3291869,hea:4403044,oth:1646700},
+{period:"Apr-Jun 2021",all:32281698,pub:5967803,priv:26268684,agr:328042,min:520009,mfg:2684625,con:2138590,ret:3769400,trn:1487823,acc:1497474,ict:1638660,fin:1278782,est:375059,pro:2574988,adm:1270793,pad:2305827,edu:3069929,hea:4401618,oth:1712888},
+{period:"Jul-Sep 2021",all:32785416,pub:5975979,priv:26764723,agr:331862,min:543618,mfg:2724869,con:2191888,ret:3850534,trn:1561286,acc:1756012,ict:1715285,fin:1271918,est:417782,pro:2670765,adm:1357700,pad:2335337,edu:3163073,hea:4414895,oth:1770847},
+{period:"Oct-Dec 2021",all:32812344,pub:5978026,priv:26798143,agr:324700,min:514386,mfg:2730380,con:2153994,ret:3845701,trn:1550777,acc:1733988,ict:1708553,fin:1289600,est:408419,pro:2730696,adm:1359867,pad:2376773,edu:3195018,hea:4427820,oth:1769696},
+{period:"Jan-Mar 2022",all:32841888,pub:5991680,priv:26798994,agr:303064,min:533174,mfg:2789124,con:2145720,ret:3899553,trn:1591861,acc:1702022,ict:1729754,fin:1307026,est:391748,pro:2700501,adm:1381025,pad:2424694,edu:3248543,hea:4397742,oth:1785337},
+{period:"Apr-Jun 2022",all:33161803,pub:6003065,priv:27115225,agr:292655,min:556453,mfg:2807022,con:2152636,ret:3955124,trn:1600609,acc:1876350,ict:1773800,fin:1301060,est:417673,pro:2786034,adm:1445025,pad:2376813,edu:3370143,hea:4550965,oth:1882940},
+{period:"Jul-Sep 2022",all:33373768,pub:6055756,priv:27272012,agr:308832,min:587671,mfg:2850289,con:2205261,ret:3944226,trn:1597430,acc:1994706,ict:1773244,fin:1309175,est:418408,pro:2916867,adm:1508893,pad:2424261,edu:3375617,hea:4608505,oth:1888048},
+{period:"Oct-Dec 2022",all:33163742,pub:6093869,priv:27025393,agr:302765,min:579248,mfg:2844695,con:2203174,ret:3799437,trn:1592783,acc:1924817,ict:1779636,fin:1288568,est:424034,pro:2932434,adm:1449839,pad:2477000,edu:3401620,hea:4620625,oth:1830714},
+{period:"Jan-Mar 2023",all:33327780,pub:6236116,priv:27046068,agr:295148,min:568462,mfg:2841400,con:2202748,ret:3843700,trn:1620543,acc:1980791,ict:1798617,fin:1289432,est:397741,pro:2975455,adm:1489291,pad:2497985,edu:3454124,hea:4701063,oth:1876286},
+{period:"Apr-Jun 2023",all:33467700,pub:6249539,priv:27172028,agr:289248,min:583832,mfg:2830028,con:2224427,ret:3834500,trn:1633148,acc:2003498,ict:1799217,fin:1337680,est:411408,pro:3012614,adm:1481680,pad:2502175,edu:3545892,hea:4784523,oth:1836327},
+{period:"Jul-Sep 2023",all:33543427,pub:6352050,priv:27145600,agr:321498,min:581613,mfg:2809618,con:2228453,ret:3930175,trn:1616726,acc:2045827,ict:1773513,fin:1325432,est:442380,pro:3009416,adm:1515839,pad:2548879,edu:3445716,hea:4756003,oth:1872498},
+{period:"Oct-Dec 2023",all:33351046,pub:6400424,priv:26912124,agr:298059,min:583403,mfg:2788960,con:2160059,ret:3872065,trn:1641956,acc:1920882,ict:1822009,fin:1344866,est:432580,pro:2887461,adm:1475614,pad:2563289,edu:3392745,hea:4759580,oth:1814958},
+{period:"Jan-Mar 2024",all:33334245,pub:7814067,priv:25403453,agr:308347,min:591086,mfg:2729067,con:2099623,ret:3384859,trn:1627901,acc:1523162,ict:1656955,fin:1558969,est:444890,pro:2990486,adm:1500585,pad:2550350,edu:3482177,hea:4836671,oth:1880223},
+{period:"Apr-Jun 2024",all:33416689,pub:7889121,priv:25395651,agr:280561,min:555913,mfg:2737737,con:2067344,ret:3500518,trn:1626756,acc:1652182,ict:1652897,fin:1485445,est:394770,pro:2875940,adm:1524163,pad:2552622,edu:3538100,hea:4932070,oth:1879034},
+{period:"Jul-Sep 2024",all:33804351,pub:7985745,priv:25710091,agr:292750,min:567268,mfg:2750773,con:2088302,ret:3602464,trn:1607986,acc:1781062,ict:1665279,fin:1418715,est:392484,pro:2860395,adm:1486454,pad:2666321,edu:3597517,hea:5027706,oth:1839912},
+{period:"Oct-Dec 2024",all:33895676,pub:7828378,priv:25943311,agr:285938,min:562626,mfg:2710351,con:2139891,ret:3674863,trn:1703880,acc:1853737,ict:1666355,fin:1433070,est:390607,pro:3025305,adm:1445119,pad:2701742,edu:3511298,hea:4791767,oth:1813574},
+{period:"Jan-Mar 2025",all:33979180,pub:8017257,priv:25851741,agr:275438,min:589458,mfg:2678475,con:2142887,ret:3658620,trn:1680366,acc:1836210,ict:1616365,fin:1400322,est:396076,pro:2983071,adm:1479758,pad:2762032,edu:3583729,hea:4823374,oth:1892157},
+{period:"Apr-Jun 2025",all:34170315,pub:8150041,priv:25899579,agr:272071,min:565750,mfg:2689277,con:2080287,ret:3723175,trn:1662830,acc:1879713,ict:1690990,fin:1381085,est:402276,pro:2915761,adm:1504914,pad:2865039,edu:3638283,hea:4809447,oth:1925762},
+{period:"Jul-Sep 2025",all:34216044,pub:8189142,priv:25923521,agr:309536,min:582303,mfg:2613682,con:2054009,ret:3614187,trn:1645582,acc:1910323,ict:1679126,fin:1359660,est:403394,pro:2947195,adm:1436085,pad:2916912,edu:3704959,hea:4895547,oth:2000983},
+{period:"Oct-Dec 2025",all:34274780,pub:8315147,priv:25874879,agr:302884,min:567006,mfg:2688003,con:2056969,ret:3597562,trn:1590923,acc:1834127,ict:1743484,fin:1380855,est:394924,pro:2943957,adm:1436587,pad:3044529,edu:3635924,hea:4914348,oth:1958484}
+],
+Men:[
+{period:"Jan-Mar 1997",all:14523898,pub:2608213,priv:11892893},{period:"Apr-Jun 1997",all:14587748,pub:2617777,priv:11941697},{period:"Jul-Sep 1997",all:14718533,pub:2648839,priv:12043090},{period:"Oct-Dec 1997",all:14742165,pub:2636003,priv:12083012},{period:"Jan-Mar 1998",all:14756050,pub:2639213,priv:12093406},{period:"Apr-Jun 1998",all:14833736,pub:2660266,priv:12144613},{period:"Jul-Sep 1998",all:14948019,pub:2659044,priv:12261386},{period:"Oct-Dec 1998",all:14882028,pub:2664226,priv:12195020},{period:"Jan-Mar 1999",all:14836793,pub:2668478,priv:12130249},{period:"Apr-Jun 1999",all:14980050,pub:2697067,priv:12244673},{period:"Jul-Sep 1999",all:15036898,pub:2704521,priv:12293534},{period:"Oct-Dec 1999",all:15069918,pub:2699249,priv:12331697},{period:"Jan-Mar 2000",all:15063578,pub:2682474,priv:12342076},{period:"Apr-Jun 2000",all:15213929,pub:2703498,priv:12472004},{period:"Jul-Sep 2000",all:15270994,pub:2720019,priv:12514516},{period:"Oct-Dec 2000",all:15227706,pub:2704050,priv:12484618},{period:"Jan-Mar 2001",all:15166461,pub:2698268,priv:12429726},{period:"Apr-Jun 2001",all:15250044,pub:2715600,priv:12493929},{period:"Jul-Sep 2001",all:15272540,pub:2730785,priv:12499437},{period:"Oct-Dec 2001",all:15148038,pub:2717773,priv:12388977},{period:"Jan-Mar 2002",all:15138416,pub:2740780,priv:12360527},{period:"Apr-Jun 2002",all:15233017,pub:2784699,priv:12412165},{period:"Jul-Sep 2002",all:15289034,pub:2829090,priv:12427040},{period:"Oct-Dec 2002",all:15265481,pub:2832023,priv:12400285},{period:"Jan-Mar 2003",all:15237524,pub:2859044,priv:12345521},{period:"Apr-Jun 2003",all:15376069,pub:2928098,priv:12413200},{period:"Jul-Sep 2003",all:15436561,pub:2969127,priv:12434047},{period:"Oct-Dec 2003",all:15416875,pub:2985128,priv:12400416},{period:"Jan-Mar 2004",all:15353491,pub:2974568,priv:12347562},{period:"Apr-Jun 2004",all:15533386,pub:2987178,priv:12511601},{period:"Jul-Sep 2004",all:15637286,pub:2981895,priv:12619023},{period:"Oct-Dec 2004",all:15584100,pub:2960571,priv:12587741},{period:"Jan-Mar 2005",all:15526745,pub:2991888,priv:12494380},{period:"Apr-Jun 2005",all:15659834,pub:2988867,priv:12625618},{period:"Jul-Sep 2005",all:15718777,pub:2976344,priv:12697060},{period:"Oct-Dec 2005",all:15657065,pub:2949048,priv:12660819},{period:"Jan-Mar 2006",all:15631165,pub:2967478,priv:12616244},{period:"Apr-Jun 2006",all:15787462,pub:2978030,priv:12762672},{period:"Jul-Sep 2006",all:15885049,pub:2976249,priv:12863157},{period:"Oct-Dec 2006",all:15863283,pub:2963476,priv:12856049},{period:"Jan-Mar 2007",all:15867779,pub:2967036,priv:12857726},{period:"Apr-Jun 2007",all:16006680,pub:2971279,priv:12993164},{period:"Jul-Sep 2007",all:16110764,pub:2965660,priv:13098461},{period:"Oct-Dec 2007",all:16164283,pub:2951879,priv:13164381},{period:"Jan-Mar 2008",all:16117756,pub:2940578,priv:13134640},{period:"Apr-Jun 2008",all:16269867,pub:2952756,priv:13267543},{period:"Jul-Sep 2008",all:16244131,pub:2962773,priv:13232600},{period:"Oct-Dec 2008",all:15979710,pub:2937843,priv:12993700},{period:"Jan-Mar 2009",all:15706143,pub:2917498,priv:12742649},{period:"Apr-Jun 2009",all:15606003,pub:2940834,priv:12618491},{period:"Jul-Sep 2009",all:15545213,pub:2945285,priv:12558161},{period:"Oct-Dec 2009",all:15465028,pub:2955786,priv:12468133},{period:"Jan-Mar 2010",all:15519505,pub:2956016,priv:12521745},{period:"Apr-Jun 2010",all:15600344,pub:2965685,priv:12593052},{period:"Jul-Sep 2010",all:15703497,pub:2900019,priv:12758453},{period:"Oct-Dec 2010",all:15669777,pub:2876000,priv:12756478},{period:"Jan-Mar 2011",all:15618186,pub:2793695,priv:12782100},{period:"Apr-Jun 2011",all:15682011,pub:2748660,priv:12891039},{period:"Jul-Sep 2011",all:15805684,pub:2705225,priv:13059498},{period:"Oct-Dec 2011",all:15736803,pub:2680283,priv:13018613},{period:"Jan-Mar 2012",all:15668093,pub:2660428,priv:12973427},{period:"Apr-Jun 2012",all:15843440,pub:2641879,priv:13165614},{period:"Jul-Sep 2012",all:15977748,pub:2626461,priv:13319139},{period:"Oct-Dec 2012",all:15922716,pub:2603261,priv:13280038},{period:"Jan-Mar 2013",all:15913680,pub:2579571,priv:13299086},{period:"Apr-Jun 2013",all:16060497,pub:2580977,priv:13445551},{period:"Jul-Sep 2013",all:16215477,pub:2558574,priv:13622278},{period:"Oct-Dec 2013",all:16225756,pub:2539027,priv:13653474},{period:"Jan-Mar 2014",all:16224791,pub:2529143,priv:13663241},{period:"Apr-Jun 2014",all:16411527,pub:2536101,priv:13843921},{period:"Jul-Sep 2014",all:16534765,pub:2529291,priv:13974161},{period:"Oct-Dec 2014",all:16524133,pub:2519490,priv:13975714},{period:"Jan-Mar 2015",all:16493451,pub:2512665,priv:13952395},{period:"Apr-Jun 2015",all:16658413,pub:2527406,priv:14104213},{period:"Jul-Sep 2015",all:16776561,pub:2538197,priv:14206131},{period:"Oct-Dec 2015",all:16706226,pub:2520261,priv:14148268},{period:"Jan-Mar 2016",all:16783375,pub:2529682,priv:14216064},{period:"Apr-Jun 2016",all:16895099,pub:2543082,priv:14315437},{period:"Jul-Sep 2016",all:17000012,pub:2551474,priv:14411310},{period:"Oct-Dec 2016",all:17004271,pub:2545613,priv:14421862},{period:"Jan-Mar 2017",all:17032019,pub:2556124,priv:14444270},{period:"Apr-Jun 2017",all:17147012,pub:2556060,priv:14552800},{period:"Jul-Sep 2017",all:17250843,pub:2575783,priv:14635892},{period:"Oct-Dec 2017",all:17180143,pub:2561699,priv:14577945},{period:"Jan-Mar 2018",all:17193217,pub:2577621,priv:14577105},{period:"Apr-Jun 2018",all:17356665,pub:2589521,priv:14724895},{period:"Jul-Sep 2018",all:17468047,pub:2611706,priv:14815428},{period:"Oct-Dec 2018",all:17390083,pub:2592867,priv:14757069},{period:"Jan-Mar 2019",all:17451765,pub:2631534,priv:14782199},{period:"Apr-Jun 2019",all:17549434,pub:2635226,priv:14876698},{period:"Jul-Sep 2019",all:17607085,pub:2621278,priv:14942764},{period:"Oct-Dec 2019",all:17511454,pub:2612823,priv:14860019},{period:"Jan-Mar 2020",all:17536126,pub:2658895,priv:14833555},{period:"Apr-Jun 2020",all:17130009,pub:2673296,priv:14413266},{period:"Jul-Sep 2020",all:17091427,pub:2670064,priv:14380047},{period:"Oct-Dec 2020",all:16940523,pub:2685124,priv:14213820},{period:"Jan-Mar 2021",all:16835285,pub:2718843,priv:14080437},{period:"Apr-Jun 2021",all:17026827,pub:2726283,priv:14261498},{period:"Jul-Sep 2021",all:17297018,pub:2729694,priv:14528100},{period:"Oct-Dec 2021",all:17307716,pub:2731437,priv:14539053},{period:"Jan-Mar 2022",all:17363700,pub:2741613,priv:14586001},{period:"Apr-Jun 2022",all:17551249,pub:2750060,priv:14762406},{period:"Jul-Sep 2022",all:17646000,pub:2773296,priv:14833048},{period:"Oct-Dec 2022",all:17538820,pub:2796163,priv:14706163},{period:"Jan-Mar 2023",all:17618218,pub:2863034,priv:14717618},{period:"Apr-Jun 2023",all:17679082,pub:2863578,priv:14779042},{period:"Jul-Sep 2023",all:17697714,pub:2910282,priv:14746006},{period:"Oct-Dec 2023",all:17560820,pub:2928889,priv:14598098},{period:"Jan-Mar 2024",all:17536268,pub:3578547,priv:13930498},{period:"Apr-Jun 2024",all:17561484,pub:3604893,priv:13929831},{period:"Jul-Sep 2024",all:17766193,pub:3660164,priv:14078226},{period:"Oct-Dec 2024",all:17809490,pub:3592163,priv:14190175},{period:"Jan-Mar 2025",all:17836660,pub:3671021,priv:14139043},{period:"Apr-Jun 2025",all:17940025,pub:3728834,priv:14175399},{period:"Jul-Sep 2025",all:17965067,pub:3749399,priv:14179044},{period:"Oct-Dec 2025",all:17987097,pub:3802001,priv:14148706}
+],
+Women:[
+{period:"Jan-Mar 1997",all:11899828,pub:3143872,priv:8741691},{period:"Apr-Jun 1997",all:12012170,pub:3193626,priv:8800129},{period:"Jul-Sep 1997",all:12131000,pub:3210903,priv:8890400},{period:"Oct-Dec 1997",all:12138564,pub:3207341,priv:8914136},{period:"Jan-Mar 1998",all:12131015,pub:3197794,priv:8905031},{period:"Apr-Jun 1998",all:12255287,pub:3234231,priv:8995287},{period:"Jul-Sep 1998",all:12359199,pub:3266490,priv:9063095},{period:"Oct-Dec 1998",all:12337285,pub:3260214,priv:9038507},{period:"Jan-Mar 1999",all:12288033,pub:3263420,priv:9011054},{period:"Apr-Jun 1999",all:12404133,pub:3292639,priv:9102021},{period:"Jul-Sep 1999",all:12499875,pub:3303057,priv:9181548},{period:"Oct-Dec 1999",all:12530696,pub:3301867,priv:9215420},{period:"Jan-Mar 2000",all:12554447,pub:3301575,priv:9242524},{period:"Apr-Jun 2000",all:12657356,pub:3325369,priv:9318985},{period:"Jul-Sep 2000",all:12710545,pub:3345665,priv:9344921},{period:"Oct-Dec 2000",all:12693254,pub:3315782,priv:9369929},{period:"Jan-Mar 2001",all:12692430,pub:3300757,priv:9384373},{period:"Apr-Jun 2001",all:12756021,pub:3325799,priv:9422164},{period:"Jul-Sep 2001",all:12755044,pub:3355900,priv:9389263},{period:"Oct-Dec 2001",all:12729859,pub:3358102,priv:9365521},{period:"Jan-Mar 2002",all:12742152,pub:3372675,priv:9359450},{period:"Apr-Jun 2002",all:12789272,pub:3423844,priv:9346231},{period:"Jul-Sep 2002",all:12840230,pub:3467798,priv:9363780},{period:"Oct-Dec 2002",all:12785787,pub:3467678,priv:9304739},{period:"Jan-Mar 2003",all:12870884,pub:3512453,priv:9350372},{period:"Apr-Jun 2003",all:13027350,pub:3580922,priv:9437662},{period:"Jul-Sep 2003",all:13087139,pub:3627652,priv:9452214},{period:"Oct-Dec 2003",all:13099151,pub:3634265,priv:9454980},{period:"Jan-Mar 2004",all:13126329,pub:3633680,priv:9483531},{period:"Apr-Jun 2004",all:13223592,pub:3630048,priv:9581666},{period:"Jul-Sep 2004",all:13337430,pub:3632253,priv:9684986},{period:"Oct-Dec 2004",all:13317398,pub:3610126,priv:9691004},{period:"Jan-Mar 2005",all:13316417,pub:3635865,priv:9673117},{period:"Apr-Jun 2005",all:13368063,pub:3632111,priv:9736118},{period:"Jul-Sep 2005",all:13395085,pub:3609459,priv:9782423},{period:"Oct-Dec 2005",all:13350519,pub:3591451,priv:9761875},{period:"Jan-Mar 2006",all:13368885,pub:3586012,priv:9780017},{period:"Apr-Jun 2006",all:13480385,pub:3595858,priv:9883862},{period:"Jul-Sep 2006",all:13565050,pub:3594248,priv:9968092},{period:"Oct-Dec 2006",all:13561490,pub:3586265,priv:9974078},{period:"Jan-Mar 2007",all:13578764,pub:3571064,priv:10003047},{period:"Apr-Jun 2007",all:13706152,pub:3577381,priv:10118877},{period:"Jul-Sep 2007",all:13784521,pub:3572131,priv:10200806},{period:"Oct-Dec 2007",all:13822892,pub:3558722,priv:10254446},{period:"Jan-Mar 2008",all:13807470,pub:3551738,priv:10236101},{period:"Apr-Jun 2008",all:13865449,pub:3553256,priv:10301981},{period:"Jul-Sep 2008",all:13854708,pub:3561980,priv:10287737},{period:"Oct-Dec 2008",all:13733183,pub:3546406,priv:10171847},{period:"Jan-Mar 2009",all:13621153,pub:3547721,priv:10060441},{period:"Apr-Jun 2009",all:13546555,pub:3563226,priv:9978724},{period:"Jul-Sep 2009",all:13541400,pub:3573810,priv:9958301},{period:"Oct-Dec 2009",all:13514506,pub:3594913,priv:9905552},{period:"Jan-Mar 2010",all:13544901,pub:3577462,priv:9947403},{period:"Apr-Jun 2010",all:13649186,pub:3593322,priv:10033011},{period:"Jul-Sep 2010",all:13734512,pub:3518772,priv:10203550},{period:"Oct-Dec 2010",all:13744791,pub:3464800,priv:10261983},{period:"Jan-Mar 2011",all:13660540,pub:3390172,priv:10265949},{period:"Apr-Jun 2011",all:13703017,pub:3334037,priv:10363088},{period:"Jul-Sep 2011",all:13787101,pub:3293207,priv:10485487},{period:"Oct-Dec 2011",all:13702900,pub:3255141,priv:10443399},{period:"Jan-Mar 2012",all:13678000,pub:3239537,priv:10425632},{period:"Apr-Jun 2012",all:13827256,pub:3212976,priv:10603736},{period:"Jul-Sep 2012",all:13920034,pub:3195665,priv:10697254},{period:"Oct-Dec 2012",all:13873987,pub:3171360,priv:10696984},{period:"Jan-Mar 2013",all:13891506,pub:3141404,priv:10741523},{period:"Apr-Jun 2013",all:14032046,pub:3130998,priv:10891426},{period:"Jul-Sep 2013",all:14171542,pub:3107208,priv:11052146},{period:"Oct-Dec 2013",all:14161681,pub:3075644,priv:11072958},{period:"Jan-Mar 2014",all:14174417,pub:3075256,priv:11088007},{period:"Apr-Jun 2014",all:14388003,pub:3074916,priv:11295028},{period:"Jul-Sep 2014",all:14474279,pub:3057777,priv:11401519},{period:"Oct-Dec 2014",all:14473870,pub:3048487,priv:11410760},{period:"Jan-Mar 2015",all:14445329,pub:3038377,priv:11393729},{period:"Apr-Jun 2015",all:14605041,pub:3040367,priv:11546455},{period:"Jul-Sep 2015",all:14704728,pub:3039216,priv:11656575},{period:"Oct-Dec 2015",all:14659605,pub:3012724,priv:11644859},{period:"Jan-Mar 2016",all:14645324,pub:3009329,priv:11633536},{period:"Apr-Jun 2016",all:14723328,pub:3019531,priv:11698389},{period:"Jul-Sep 2016",all:14817683,pub:3021079,priv:11787143},{period:"Oct-Dec 2016",all:14834576,pub:3026282,priv:11800699},{period:"Jan-Mar 2017",all:14850524,pub:3023630,priv:11815370},{period:"Apr-Jun 2017",all:14957493,pub:3025806,priv:11926724},{period:"Jul-Sep 2017",all:15066936,pub:3047165,priv:11011488},{period:"Oct-Dec 2017",all:15012642,pub:3031365,priv:11974101},{period:"Jan-Mar 2018",all:14990568,pub:3052807,priv:11934371},{period:"Apr-Jun 2018",all:15140083,pub:3059505,priv:12073005},{period:"Jul-Sep 2018",all:15265841,pub:3084305,priv:12169569},{period:"Oct-Dec 2018",all:15237699,pub:3072595,priv:12155365},{period:"Jan-Mar 2019",all:15316454,pub:3124514,priv:12186335},{period:"Apr-Jun 2019",all:15407506,pub:3120168,priv:12279001},{period:"Jul-Sep 2019",all:15488708,pub:3133235,priv:12350812},{period:"Oct-Dec 2019",all:15480673,pub:3113444,priv:12358397},{period:"Jan-Mar 2020",all:15457397,pub:3167339,priv:12284433},{period:"Apr-Jun 2020",all:15329697,pub:3179999,priv:12146749},{period:"Jul-Sep 2020",all:15217970,pub:3193449,priv:12019136},{period:"Oct-Dec 2020",all:15161502,pub:3211898,priv:11947363},{period:"Jan-Mar 2021",all:15084738,pub:3239591,priv:11837580},{period:"Apr-Jun 2021",all:15254871,pub:3241519,priv:12007186},{period:"Jul-Sep 2021",all:15488398,pub:3246285,priv:12236623},{period:"Oct-Dec 2021",all:15504628,pub:3246589,priv:12259090},{period:"Jan-Mar 2022",all:15478188,pub:3250067,priv:12212993},{period:"Apr-Jun 2022",all:15610554,pub:3252997,priv:12352819},{period:"Jul-Sep 2022",all:15727768,pub:3282460,priv:12438964},{period:"Oct-Dec 2022",all:15624922,pub:3297706,priv:12319230},{period:"Jan-Mar 2023",all:15709562,pub:3373082,priv:12328450},{period:"Apr-Jun 2023",all:15788618,pub:3385961,priv:12392986},{period:"Jul-Sep 2023",all:15845713,pub:3441768,priv:12399594},{period:"Oct-Dec 2023",all:15790226,pub:3471535,priv:12314026},{period:"Jan-Mar 2024",all:15797977,pub:4235520,priv:11472955},{period:"Apr-Jun 2024",all:15855205,pub:4284228,priv:11465820},{period:"Jul-Sep 2024",all:16038158,pub:4325581,priv:11631865},{period:"Oct-Dec 2024",all:16086186,pub:4236215,priv:11753136},{period:"Jan-Mar 2025",all:16142520,pub:4346236,priv:11712698},{period:"Apr-Jun 2025",all:16230290,pub:4421207,priv:11724180},{period:"Jul-Sep 2025",all:16250977,pub:4439743,priv:11743977},{period:"Oct-Dec 2025",all:16287683,pub:4513146,priv:11726173}
+]
+};
+
+/* ═══════════════════════════════════════════════════
+   SECTOR CONFIG
+═══════════════════════════════════════════════════ */
+const SECTORS = [
+  {key:'hea', label:'Health & social work',     color:'#4f8ef7'},
+  {key:'edu', label:'Education',                color:'#2dd4a0'},
+  {key:'ret', label:'Wholesale & retail',       color:'#f7844f'},
+  {key:'pad', label:'Public admin & defence',   color:'#c084fc'},
+  {key:'pro', label:'Professional & scientific',color:'#facc15'},
+  {key:'mfg', label:'Manufacturing',            color:'#f76060'},
+  {key:'con', label:'Construction',             color:'#60c4f7'},
+  {key:'oth', label:'Other services',           color:'#a3e635'},
+  {key:'acc', label:'Accommodation & food',     color:'#fb923c'},
+  {key:'ict', label:'Information & comms',      color:'#818cf8'},
+  {key:'trn', label:'Transport & storage',      color:'#34d399'},
+  {key:'adm', label:'Admin & support',          color:'#94a3b8'},
+  {key:'fin', label:'Financial & insurance',    color:'#e879f9'},
+  {key:'min', label:'Mining & energy',          color:'#fbbf24'},
+  {key:'est', label:'Real estate',              color:'#7dd3fc'},
+  {key:'agr', label:'Agriculture',              color:'#86efac'},
+];
+
+/* ═══════════════════════════════════════════════════
+   STATE & UTILS
+═══════════════════════════════════════════════════ */
+let gender = 'People';
+let viewMode = 'abs'; // 'abs' | 'pct'
+let compareMode = false;
+let compareSelected = []; // array of sector keys
+let sectorFilter = '';
+let charts = {};
+
+function fmtM(n){ return (n/1e6).toFixed(2)+'m'; }
+function fmtK(n){ return Math.round(n/1000).toLocaleString()+'k'; }
+function shortLabel(p){
+  return p.replace('Jan-Mar','Q1').replace('Apr-Jun','Q2').replace('Jul-Sep','Q3').replace('Oct-Dec','Q4');
+}
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.opacity = '1';
+  setTimeout(()=>{ t.style.opacity='0'; }, 2000);
+}
+
+function allYears(){
+  return [...new Set(RAW.People.map(r=>+r.period.slice(-4)))].sort((a,b)=>a-b);
+}
+
+function filteredData(){
+  const fy = +document.getElementById('fromYear').value;
+  const ty = +document.getElementById('toYear').value;
+  return RAW[gender].filter(r=>{
+    const y = +r.period.slice(-4);
+    return y >= fy && y <= ty;
+  });
+}
+
+/* ═══════════════════════════════════════════════════
+   URL STATE (share)
+═══════════════════════════════════════════════════ */
+function getStateParams() {
+  return {
+    g: gender,
+    m: viewMode,
+    fy: document.getElementById('fromYear').value,
+    ty: document.getElementById('toYear').value,
+    c: compareSelected.join(',')
+  };
+}
+
+function applyStateFromURL() {
+  const p = new URLSearchParams(location.search);
+  if (p.get('g') && ['People','Men','Women'].includes(p.get('g'))) {
+    gender = p.get('g');
+  }
+  if (p.get('m') && ['abs','pct'].includes(p.get('m'))) viewMode = p.get('m');
+  if (p.get('fy')) document.getElementById('fromYear').value = p.get('fy');
+  if (p.get('ty')) document.getElementById('toYear').value = p.get('ty');
+  if (p.get('c') && p.get('c').length) compareSelected = p.get('c').split(',').filter(Boolean);
+  // Sync UI
+  ['People','Men','Women'].forEach(id=>{ document.getElementById('btn'+id).classList.toggle('active', id===gender); });
+  document.getElementById('btnAbs').classList.toggle('active', viewMode==='abs');
+  document.getElementById('btnPct').classList.toggle('active', viewMode==='pct');
+}
+
+function shareUrl() {
+  const p = new URLSearchParams(getStateParams());
+  const url = location.origin + location.pathname + '?' + p.toString();
+  navigator.clipboard.writeText(url).then(()=>showToast('Link copied to clipboard!')).catch(()=>{
+    // fallback
+    const ta = document.createElement('textarea');
+    ta.value = url; document.body.appendChild(ta); ta.select();
+    document.execCommand('copy'); document.body.removeChild(ta);
+    showToast('Link copied!');
+  });
+}
+
+/* ═══════════════════════════════════════════════════
+   CSV EXPORT
+═══════════════════════════════════════════════════ */
+function downloadCSV() {
+  const data = filteredData();
+  const secs = SECTORS.filter(s => data[data.length-1] && data[data.length-1][s.key] != null);
+  const header = ['Period','Total','Public','Private', ...secs.map(s=>s.label)];
+  const rows = data.map(r => [
+    r.period,
+    r.all,
+    r.pub,
+    r.priv,
+    ...secs.map(s => r[s.key] || '')
+  ]);
+  const csv = [header, ...rows].map(r => r.join(',')).join('\n');
+  const blob = new Blob([csv], {type:'text/csv'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `uk_employment_${gender.toLowerCase()}_${document.getElementById('fromYear').value}-${document.getElementById('toYear').value}.csv`;
+  a.click();
+  showToast('CSV downloaded!');
+}
+
+/* ═══════════════════════════════════════════════════
+   RECESSION BANDS
+═══════════════════════════════════════════════════ */
+const EVENTS = [
+  { start: 'Q1 2008', end: 'Q3 2009', label: 'GFC', color: 'rgba(255,100,100,0.06)' },
+  { start: 'Q2 2020', end: 'Q2 2020', label: 'Covid', color: 'rgba(100,100,255,0.07)' },
+  { start: 'Q3 2016', end: 'Q3 2016', label: 'Brexit ref.', color: 'rgba(255,200,50,0.06)' },
+];
+
+function makeRecessionPlugin(labels) {
+  const bands = [];
+  EVENTS.forEach(r => {
+    const s = labels.indexOf(r.start);
+    const e = labels.indexOf(r.end);
+    if (s !== -1 && e !== -1) bands.push({ s, e, label: r.label, color: r.color });
+    else if (s !== -1) bands.push({ s, e: s, label: r.label, color: r.color });
+  });
+  if (!bands.length) return null;
+  return {
+    id: 'recessionBands',
+    beforeDraw(chart) {
+      const { ctx, chartArea: { top, bottom }, scales: { x } } = chart;
+      if (!x || !x.ticks || !x.ticks.length) return;
+      const step = x.width / (labels.length - 1 || 1);
+      ctx.save();
+      bands.forEach(b => {
+        const x0 = x.left + b.s * step;
+        const x1 = x.left + b.e * step + step;
+        ctx.fillStyle = b.color;
+        ctx.fillRect(x0, top, x1 - x0, bottom - top);
+        ctx.fillStyle = 'rgba(255,255,255,0.2)';
+        ctx.font = '9px DM Mono, monospace';
+        ctx.fillText(b.label, x0 + 4, top + 11);
+      });
+      ctx.restore();
+    }
+  };
+}
+
+/* ═══════════════════════════════════════════════════
+   CHART DEFAULTS
+═══════════════════════════════════════════════════ */
+Chart.defaults.color = '#8b90a0';
+Chart.defaults.font.family = "'DM Mono', monospace";
+Chart.defaults.font.size = 11;
+
+const gridColor = 'rgba(255,255,255,0.05)';
+const tooltipDefaults = {
+  backgroundColor: '#1a1e27',
+  borderColor: 'rgba(255,255,255,0.12)',
+  borderWidth: 1,
+  padding: 10,
+  titleFont: { family: "'DM Mono', monospace", size: 11 },
+  bodyFont: { family: "'DM Mono', monospace", size: 11 },
+  titleColor: '#e8eaf0',
+  bodyColor: '#8b90a0',
+};
+
+/* ═══════════════════════════════════════════════════
+   KEY INSIGHTS
+═══════════════════════════════════════════════════ */
+function updateInsights(data) {
+  const latest = data[data.length-1];
+  const first = data[0];
+  const secs = SECTORS.filter(s=>latest[s.key]!=null);
+
+  const chips = [];
+
+  // Total change
+  const totalChange = latest.all - first.all;
+  const totalPct = ((totalChange/first.all)*100).toFixed(1);
+  const dir = totalChange >= 0;
+  chips.push(`Total employment <span class="${dir?'':'neg'}">${dir?'+':''}${(totalChange/1e6).toFixed(2)}m</span> since ${first.period.slice(-4)}`);
+
+  if(secs.length) {
+    // Biggest sector
+    const top = secs.reduce((a,b)=>latest[a.key]>latest[b.key]?a:b);
+    chips.push(`<span class="neu">${top.label}</span> is largest sector at ${fmtK(latest[top.key])}`);
+
+    // Fastest gainer since 2019
+    const base = RAW[gender].find(r=>r.hea!=null);
+    if(base){
+      const ranked = secs.map(s=>({s,g:(latest[s.key]-base[s.key])/base[s.key]})).filter(x=>x.g>0).sort((a,b)=>b.g-a.g);
+      if(ranked.length) chips.push(`<span>${ranked[0].s.label}</span> grew fastest since 2019: <span>+${Math.round(ranked[0].g*100)}%</span>`);
+
+      // Biggest loser
+      const losers = secs.map(s=>({s,g:(latest[s.key]-base[s.key])/base[s.key]})).filter(x=>x.g<0).sort((a,b)=>a.g-b.g);
+      if(losers.length) chips.push(`<span class="neg">${losers[0].s.label}</span> declined most since 2019: <span class="neg">${Math.round(losers[0].g*100)}%</span>`);
+    }
+  }
+
+  ['ins1','ins2','ins3','ins4'].forEach((id,i)=>{
+    const el = document.getElementById(id);
+    if(chips[i]) { el.innerHTML = chips[i]; el.style.display='inline-block'; }
+    else el.style.display='none';
+  });
+}
+
+/* ═══════════════════════════════════════════════════
+   STATS
+═══════════════════════════════════════════════════ */
+function updateStats(data){
+  const latest = data[data.length-1];
+  const first = data[0];
+  const total = latest.all;
+  const change = total - first.all;
+  const pct = ((change/first.all)*100).toFixed(1);
+
+  document.getElementById('sTotal').textContent = fmtM(total);
+  document.getElementById('sPeriod').textContent = latest.period;
+
+  const changeEl = document.getElementById('sChange');
+  changeEl.textContent = (change>0?'+':'')+fmtM(change);
+  changeEl.className = 'val ' + (change>=0?'pos':'neg');
+  document.getElementById('sChangePct').textContent = (change>=0?'+':'')+pct+'% over period';
+
+  const secs = SECTORS.filter(s=>latest[s.key]!=null);
+  if(secs.length){
+    const top = secs.reduce((a,b)=>latest[a.key]>latest[b.key]?a:b);
+    document.getElementById('sTop').textContent = top.label;
+    document.getElementById('sTopVal').textContent = fmtK(latest[top.key]);
+
+    const base = RAW[gender].find(r=>r.hea!=null);
+    if(base){
+      const ranked = secs.map(s=>({s,g:(latest[s.key]-base[s.key])/base[s.key]})).filter(x=>x.g>0).sort((a,b)=>b.g-a.g);
+      if(ranked.length){
+        document.getElementById('sFast').textContent = ranked[0].s.label;
+        document.getElementById('sFastVal').textContent = '+'+Math.round(ranked[0].g*100)+'% since 2019';
+      }
+    }
+  } else {
+    document.getElementById('sTop').textContent = '—';
+    document.getElementById('sTopVal').textContent = 'data from 2019';
+    document.getElementById('sFast').textContent = '—';
+    document.getElementById('sFastVal').textContent = '';
+  }
+}
+
+/* ═══════════════════════════════════════════════════
+   TREND CHART
+═══════════════════════════════════════════════════ */
+function renderTrend(data){
+  if(charts.trend) charts.trend.destroy();
+  const labels = data.map(r=>shortLabel(r.period));
+  const recPlugin = makeRecessionPlugin(labels);
+
+  let chartData, yLabel;
+  if(viewMode === 'pct') {
+    // YoY % change (compare same quarter prev year = 4 quarters back)
+    const vals = data.map((r,i) => {
+      if(i < 4) return null;
+      const prev = data[i-4].all;
+      return +((r.all - prev)/prev*100).toFixed(2);
+    });
+    chartData = vals;
+    yLabel = 'YoY %';
+    document.getElementById('trendBadge').textContent = 'YoY % change';
+  } else {
+    chartData = data.map(r=>Math.round(r.all/1000));
+    yLabel = 'thousands';
+    document.getElementById('trendBadge').textContent = 'thousands';
+  }
+
+  charts.trend = new Chart(document.getElementById('trendChart'),{
+    type:'line',
+    data:{labels,datasets:[{
+      label:'Total employed',
+      data: chartData,
+      borderColor:'#4f8ef7',
+      borderWidth:2,
+      pointRadius:0,
+      pointHoverRadius:4,
+      tension:0.3,
+      fill: viewMode==='pct' ? {target:'origin', above:'rgba(79,142,247,0.08)', below:'rgba(247,96,96,0.08)'} : false
+    }]},
+    plugins: recPlugin ? [recPlugin] : [],
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{
+        legend:{display:false},
+        tooltip:{
+          ...tooltipDefaults,
+          callbacks:{label:ctx=>viewMode==='pct' ? ` ${ctx.raw?.toFixed(2)}%` : ` ${ctx.raw?.toLocaleString()}k`}
+        }
+      },
+      scales:{
+        x:{ticks:{maxTicksLimit:12},grid:{color:gridColor},border:{color:'rgba(255,255,255,0.08)'}},
+        y:{
+          ticks:{callback:v=>viewMode==='pct' ? v+'%' : v.toLocaleString()+'k'},
+          grid:{color:gridColor},border:{color:'rgba(255,255,255,0.08)'}
+        }
+      }
+    }
+  });
+}
+
+/* ═══════════════════════════════════════════════════
+   SECTOR FILTER
+═══════════════════════════════════════════════════ */
+function filterSectors() {
+  sectorFilter = document.getElementById('sectorSearch').value.toLowerCase();
+  // Re-render legend only
+  renderSectorLegend(window._lastSortedSectors, window._lastLatest);
+}
+
+function renderSectorLegend(sorted, latest) {
+  window._lastSortedSectors = sorted;
+  window._lastLatest = latest;
+  const legend = document.getElementById('sectorLegend');
+  const filtered = sectorFilter ? sorted.filter(s=>s.label.toLowerCase().includes(sectorFilter)) : sorted;
+  legend.innerHTML = filtered.map(s=>`
+    <span class="legend-item${compareMode && compareSelected.includes(s.key) ? ' selected' : ''}"
+      data-key="${s.key}"
+      onclick="handleLegendClick('${s.key}')">
+      <span class="legend-dot" style="background:${s.color}"></span>
+      ${s.label}
+    </span>
+  `).join('');
+}
+
+function handleLegendClick(key) {
+  if(compareMode) {
+    toggleCompareSelection(key);
+  } else {
+    openDrilldown(SECTORS.find(s=>s.key===key));
+  }
+}
+
+/* ═══════════════════════════════════════════════════
+   SECTOR CHART
+═══════════════════════════════════════════════════ */
+function renderSectors(data){
+  if(charts.sector) charts.sector.destroy();
+  const latest = data[data.length-1];
+  const available = SECTORS.filter(s=>latest[s.key]!=null);
+
+  const noMsg = document.getElementById('noSectorMsg');
+  const badge = document.getElementById('sectorPeriodBadge');
+
+  if(!available.length){
+    noMsg.style.display='block';
+    badge.textContent = 'no data in range';
+    document.getElementById('sectorLegend').innerHTML='';
+    return;
+  }
+  noMsg.style.display='none';
+  badge.textContent = latest.period;
+
+  const sorted = [...available].sort((a,b)=>latest[b.key]-latest[a.key]);
+  renderSectorLegend(sorted, latest);
+
+  charts.sector = new Chart(document.getElementById('sectorChart'),{
+    type:'bar',
+    data:{
+      labels: sorted.map(s=>s.label),
+      datasets:[{
+        label:'Employment',
+        data: sorted.map(s=>Math.round(latest[s.key]/1000)),
+        backgroundColor: sorted.map(s=>compareMode && compareSelected.includes(s.key) ? s.color+'bb' : s.color+'33'),
+        borderColor: sorted.map(s=>s.color),
+        borderWidth: sorted.map(s=>compareMode && compareSelected.includes(s.key) ? 2 : 1),
+        borderRadius:3,
+        borderSkipped:false
+      }]
+    },
+    options:{
+      indexAxis:'y',
+      responsive:true,maintainAspectRatio:false,
+      onHover(evt, els){ evt.native.target.style.cursor = els.length ? 'pointer' : 'default'; },
+      onClick(evt, els){
+        if(els.length){ handleLegendClick(sorted[els[0].index].key); }
+      },
+      plugins:{
+        legend:{display:false},
+        tooltip:{
+          ...tooltipDefaults,
+          callbacks:{label:ctx=>` ${ctx.raw.toLocaleString()}k  ·  click to ${compareMode?'compare':'see trend'}`}
+        }
+      },
+      scales:{
+        x:{ticks:{callback:v=>v.toLocaleString()+'k'},grid:{color:gridColor},border:{color:'rgba(255,255,255,0.08)'}},
+        y:{ticks:{font:{size:12}},grid:{display:false},border:{color:'rgba(255,255,255,0.08)'}}
+      }
+    }
+  });
+}
+
+/* ═══════════════════════════════════════════════════
+   COMPARE MODE
+═══════════════════════════════════════════════════ */
+function toggleCompareMode() {
+  compareMode = !compareMode;
+  const btn = document.getElementById('compareModeBtn');
+  const info = document.getElementById('compareInfo');
+  btn.style.color = compareMode ? 'var(--accent4)' : '';
+  btn.style.borderColor = compareMode ? 'var(--accent4)' : '';
+  info.classList.toggle('active', compareMode);
+  if(!compareMode) { clearCompare(); } else { renderSectors(filteredData()); }
+}
+
+function toggleCompareSelection(key) {
+  const idx = compareSelected.indexOf(key);
+  if(idx > -1) {
+    compareSelected.splice(idx,1);
+  } else {
+    if(compareSelected.length >= 5) { showToast('Max 5 sectors for comparison'); return; }
+    compareSelected.push(key);
+  }
+  updateCompareUI();
+  renderSectors(filteredData()); // re-render bar highlights
+}
+
+function clearCompare() {
+  compareSelected = [];
+  compareMode = false;
+  document.getElementById('compareModeBtn').style.color = '';
+  document.getElementById('compareModeBtn').style.borderColor = '';
+  document.getElementById('compareInfo').classList.remove('active');
+  document.getElementById('comparePanel').classList.remove('open');
+  if(charts.compare){ charts.compare.destroy(); charts.compare=null; }
+  renderSectors(filteredData());
+}
+
+function updateCompareUI() {
+  const panel = document.getElementById('comparePanel');
+  const chips = document.getElementById('compareChips');
+
+  if(!compareSelected.length) {
+    panel.classList.remove('open');
+    return;
+  }
+  panel.classList.add('open');
+  panel.scrollIntoView({behavior:'smooth',block:'nearest'});
+
+  // Chips
+  chips.innerHTML = compareSelected.map(key=>{
+    const s = SECTORS.find(x=>x.key===key);
+    return `<span class="compare-chip"><span class="dot" style="background:${s.color}"></span>${s.label}<span class="x" onclick="toggleCompareSelection('${key}')">✕</span></span>`;
+  }).join('');
+
+  // Chart
+  const allPeopleData = RAW[gender];
+  const labels = allPeopleData.filter(r=>r[compareSelected[0]]!=null).map(r=>shortLabel(r.period));
+  const datasets = compareSelected.map(key=>{
+    const s = SECTORS.find(x=>x.key===key);
+    const vals = allPeopleData.filter(r=>r[key]!=null).map(r=>Math.round(r[key]/1000));
+    return {
+      label: s.label,
+      data: vals,
+      borderColor: s.color,
+      borderWidth: 2,
+      pointRadius: 0,
+      pointHoverRadius: 4,
+      tension: 0.3,
+      fill: false
+    };
+  });
+
+  if(charts.compare) charts.compare.destroy();
+  const recPlugin = makeRecessionPlugin(labels);
+  charts.compare = new Chart(document.getElementById('compareChart'),{
+    type:'line',
+    data:{labels, datasets},
+    plugins: recPlugin ? [recPlugin] : [],
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{
+        legend:{
+          display:true,
+          labels:{color:'#8b90a0',font:{family:"'DM Mono', monospace",size:11},boxWidth:10,boxHeight:10}
+        },
+        tooltip:{...tooltipDefaults, callbacks:{label:ctx=>` ${ctx.dataset.label}: ${ctx.raw.toLocaleString()}k`}}
+      },
+      scales:{
+        x:{ticks:{maxTicksLimit:12},grid:{color:gridColor},border:{color:'rgba(255,255,255,0.08)'}},
+        y:{ticks:{callback:v=>v.toLocaleString()+'k'},grid:{color:gridColor},border:{color:'rgba(255,255,255,0.08)'}}
+      }
+    }
+  });
+
+  // Update badge
+  document.getElementById('comparePanelBadge').textContent = `${compareSelected.length} sector${compareSelected.length>1?'s':''} · thousands`;
+  // Update info text
+  document.getElementById('compareInfoText').textContent = `${compareSelected.length} sector${compareSelected.length>1?'s':''} selected — click more to add (max 5)`;
+}
+
+/* ═══════════════════════════════════════════════════
+   PUBLIC / PRIVATE CHART
+═══════════════════════════════════════════════════ */
+function renderPubPriv(data){
+  if(charts.pubpriv) charts.pubpriv.destroy();
+  const labels = data.map(r=>shortLabel(r.period));
+  const recPlugin = makeRecessionPlugin(labels);
+  charts.pubpriv = new Chart(document.getElementById('pubprivChart'),{
+    type:'line',
+    data:{labels,datasets:[
+      {label:'Private',data:data.map(r=>Math.round(r.priv/1000)),borderColor:'#4f8ef7',borderWidth:2,pointRadius:0,tension:0.3,fill:false},
+      {label:'Public', data:data.map(r=>Math.round(r.pub/1000)), borderColor:'#2dd4a0',borderWidth:2,pointRadius:0,tension:0.3,fill:false}
+    ]},
+    plugins: recPlugin ? [recPlugin] : [],
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{...tooltipDefaults,callbacks:{label:ctx=>` ${ctx.dataset.label}: ${ctx.raw.toLocaleString()}k`}}},
+      scales:{
+        x:{ticks:{maxTicksLimit:10},grid:{color:gridColor},border:{color:'rgba(255,255,255,0.08)'}},
+        y:{ticks:{callback:v=>v.toLocaleString()+'k'},grid:{color:gridColor},border:{color:'rgba(255,255,255,0.08)'}}
+      }
+    }
+  });
+}
+
+/* ═══════════════════════════════════════════════════
+   GENDER CHART
+═══════════════════════════════════════════════════ */
+function renderGender(data){
+  if(charts.gender) charts.gender.destroy();
+  const years = [...new Set(data.map(r=>+r.period.slice(-4)))];
+  const fy = years[0], ty = years[years.length-1];
+  const menData = RAW.Men.filter(r=>{const y=+r.period.slice(-4);return y>=fy&&y<=ty;});
+  const womenData = RAW.Women.filter(r=>{const y=+r.period.slice(-4);return y>=fy&&y<=ty;});
+  const labels = menData.map(r=>shortLabel(r.period));
+  const recPlugin = makeRecessionPlugin(labels);
+
+  charts.gender = new Chart(document.getElementById('genderChart'),{
+    type:'line',
+    data:{labels,datasets:[
+      {label:'Men',  data:menData.map(r=>Math.round(r.all/1000)),  borderColor:'#818cf8',borderWidth:2,pointRadius:0,tension:0.3,fill:false},
+      {label:'Women',data:womenData.map(r=>Math.round(r.all/1000)),borderColor:'#f9a8d4',borderWidth:2,pointRadius:0,tension:0.3,fill:false}
+    ]},
+    plugins: recPlugin ? [recPlugin] : [],
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{...tooltipDefaults,callbacks:{label:ctx=>` ${ctx.dataset.label}: ${ctx.raw.toLocaleString()}k`}}},
+      scales:{
+        x:{ticks:{maxTicksLimit:10},grid:{color:gridColor},border:{color:'rgba(255,255,255,0.08)'}},
+        y:{ticks:{callback:v=>v.toLocaleString()+'k'},grid:{color:gridColor},border:{color:'rgba(255,255,255,0.08)'}}
+      }
+    }
+  });
+
+  const mLatest = menData[menData.length-1];
+  const wLatest = womenData[womenData.length-1];
+  const mFirst = menData[0];
+  const wFirst = womenData[0];
+  document.getElementById('genderCards').innerHTML = `
+    <div class="gender-card">
+      <div class="gc-label" style="color:#818cf8">Men</div>
+      <div class="gc-val">${fmtM(mLatest.all)}</div>
+      <div class="gc-sub">${((mLatest.all-mFirst.all)/mFirst.all*100).toFixed(1)}% since ${mFirst.period.slice(-4)}</div>
+    </div>
+    <div class="gender-card">
+      <div class="gc-label" style="color:#f9a8d4">Women</div>
+      <div class="gc-val">${fmtM(wLatest.all)}</div>
+      <div class="gc-sub">${((wLatest.all-wFirst.all)/wFirst.all*100).toFixed(1)}% since ${wFirst.period.slice(-4)}</div>
+    </div>
+  `;
+}
+
+/* ═══════════════════════════════════════════════════
+   SECTOR DRILL-DOWN
+═══════════════════════════════════════════════════ */
+function openDrilldown(sector) {
+  if(!sector) return;
+  const panel = document.getElementById('drilldown');
+  panel.classList.add('open');
+  panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+  document.getElementById('ddTitle').textContent = sector.label;
+  document.getElementById('ddDot').style.background = sector.color;
+
+  const allData = RAW.People.filter(r => r[sector.key] != null);
+  const labels = allData.map(r => shortLabel(r.period));
+  const values = allData.map(r => Math.round(r[sector.key] / 1000));
+
+  const first = allData[0];
+  const latest = allData[allData.length - 1];
+  const peak = allData.reduce((a, b) => b[sector.key] > a[sector.key] ? b : a);
+  const trough = allData.reduce((a, b) => b[sector.key] < a[sector.key] ? b : a);
+  const change = latest[sector.key] - first[sector.key];
+  const pct = ((change / first[sector.key]) * 100).toFixed(1);
+
+  document.getElementById('ddStats').innerHTML = `
+    <div class="drilldown-stat">
+      <div class="ds-lbl">Latest (${latest.period})</div>
+      <div class="ds-val" style="color:${sector.color}">${fmtK(latest[sector.key])}</div>
+    </div>
+    <div class="drilldown-stat">
+      <div class="ds-lbl">Change since 2019</div>
+      <div class="ds-val" style="color:${change >= 0 ? '#2dd4a0' : '#f76060'}">${change >= 0 ? '+' : ''}${(change / 1000).toFixed(0)}k</div>
+      <div class="ds-sub">${pct}%</div>
+    </div>
+    <div class="drilldown-stat">
+      <div class="ds-lbl">Peak</div>
+      <div class="ds-val">${fmtK(peak[sector.key])}</div>
+      <div class="ds-sub">${peak.period}</div>
+    </div>
+    <div class="drilldown-stat">
+      <div class="ds-lbl">Trough</div>
+      <div class="ds-val">${fmtK(trough[sector.key])}</div>
+      <div class="ds-sub">${trough.period}</div>
+    </div>
+  `;
+
+  if (charts.drill) charts.drill.destroy();
+  const recPlugin = makeRecessionPlugin(labels);
+  charts.drill = new Chart(document.getElementById('drillChart'), {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        label: sector.label,
+        data: values,
+        borderColor: sector.color,
+        borderWidth: 2,
+        pointRadius: 0,
+        pointHoverRadius: 4,
+        tension: 0.3,
+        fill: true,
+        backgroundColor: sector.color + '18',
+      }]
+    },
+    plugins: recPlugin ? [recPlugin] : [],
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: { ...tooltipDefaults, callbacks: { label: ctx => ' ' + ctx.raw.toLocaleString() + 'k' } }
+      },
+      scales: {
+        x: { ticks: { maxTicksLimit: 12 }, grid: { color: gridColor }, border: { color: 'rgba(255,255,255,0.08)' } },
+        y: { ticks: { callback: v => v.toLocaleString() + 'k' }, grid: { color: gridColor }, border: { color: 'rgba(255,255,255,0.08)' } }
+      }
+    }
+  });
+}
+
+function closeDrilldown() {
+  document.getElementById('drilldown').classList.remove('open');
+  if (charts.drill) { charts.drill.destroy(); charts.drill = null; }
+}
+
+/* ═══════════════════════════════════════════════════
+   CONTROLS
+═══════════════════════════════════════════════════ */
+function setGender(g){
+  gender = g;
+  ['People','Men','Women'].forEach(id=>{
+    document.getElementById('btn'+id).classList.toggle('active', id===g);
+  });
+  render();
+}
+
+function setMode(m){
+  viewMode = m;
+  document.getElementById('btnAbs').classList.toggle('active', m==='abs');
+  document.getElementById('btnPct').classList.toggle('active', m==='pct');
+  render();
+}
+
+function setRange(years){
+  const ty = document.getElementById('toYear');
+  const fy = document.getElementById('fromYear');
+  const max = +ty.options[ty.options.length-1].value;
+  fy.value = years===99 ? fy.options[0].value : Math.max(+fy.options[0].value, max-years);
+  render();
+}
+
+function render(){
+  closeDrilldown();
+  if(compareSelected.length) clearCompare();
+  const data = filteredData();
+  if(!data.length) return;
+  updateStats(data);
+  updateInsights(data);
+  renderTrend(data);
+  renderSectors(data);
+  renderPubPriv(data);
+  renderGender(data);
+}
+
+/* ═══════════════════════════════════════════════════
+   KEYBOARD SHORTCUTS
+═══════════════════════════════════════════════════ */
+document.addEventListener('keydown', e => {
+  // Skip if typing in an input
+  if(e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
+  const shortcuts = {'1':5,'2':10,'3':20,'4':99};
+  if(shortcuts[e.key]) setRange(shortcuts[e.key]);
+  if(e.key==='a'||e.key==='A') setGender('People');
+  if(e.key==='m'||e.key==='M') setGender('Men');
+  if(e.key==='w'||e.key==='W') setGender('Women');
+  if(e.key==='p'||e.key==='P') setMode(viewMode==='abs'?'pct':'abs');
+  if(e.key==='Escape') { closeDrilldown(); clearCompare(); }
+});
+
+/* ═══════════════════════════════════════════════════
+   INIT
+═══════════════════════════════════════════════════ */
+function init(){
+  const years = allYears();
+  const fy = document.getElementById('fromYear');
+  const ty = document.getElementById('toYear');
+  years.forEach(y=>{
+    fy.add(new Option(y,y));
+    ty.add(new Option(y,y));
+  });
+  fy.value = years[0];
+  ty.value = years[years.length-1];
+
+  applyStateFromURL();
+  render();
+
+  // If compareSelected from URL, show compare
+  if(compareSelected.length) {
+    compareMode = true;
+    document.getElementById('compareInfo').classList.add('active');
+    updateCompareUI();
+    renderSectors(filteredData());
+  }
+}
+
+init();
+</script>
+</body>
+</html>
